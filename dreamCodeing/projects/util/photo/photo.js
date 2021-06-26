@@ -77,7 +77,6 @@ class Photo {
   classifyFiles = (fileList) => {
     return Promise.all(
       fileList.map((file) => {
-        const extension = extname(file);
         // 동영상
         if (this.isVideo(file)) {
           return this.move(file, 'video');
