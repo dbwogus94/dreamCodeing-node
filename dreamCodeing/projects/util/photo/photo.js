@@ -1,12 +1,12 @@
 const fs = require('fs').promises;
-const path = require('path');
+const { join, extname } = require('path');
 
 /**
  * 요구사항에 따른 파일 분류용 클래스
  * <pre>
- * - 핵심 목표
- * nodejs를 사용하는 의미가 있게 비동기를 적절하게 사용한다.
- * 큰 흐름에 있어서는 동기적으로 만들어서 어떤 일을 하는지 명확하게 한다..
+ * 핵심 목표
+ * - nodejs의 특성에 맞게 비동기를 적절하게 사용한다.
+ * - 큰 흐름에 있어서는 동기적으로 만들어서 어떤 일을 하는지 명확하게 한다.
  * <pre>
  */
 class Photo {
@@ -17,14 +17,15 @@ class Photo {
   }
 
   run = async (target) => {
-    this.targetPath = path.join(this.DEFAULT_PATH, target);
+    this.targetPath = join(this.DEFAULT_PATH, target);
     try {
       // 분류할 폴더 생성
-      const result = await this.createDirectorys(this.targetPath);
+      await this.createDirectorys(this.targetPath);
       // 파일 리스트 가져오기
       const fileList = await fs.readdir(this.targetPath);
       // 파일 분류 실행
       await this.classifyFiles(fileList);
+
       console.log('파일 분류 완료!!\n프로그램을 종료합니다.');
     } catch (e) {
       console.error(e);
@@ -41,12 +42,12 @@ class Photo {
     return Promise.all(
       this.folderList.map((folder) => {
         return fs
-          .stat(path.join(targetPath, folder))
+          .stat(join(targetPath, folder))
           .then(() => {
             return true;
           })
           .catch(() => {
-            return this.makeDirectory(path.join(targetPath, folder));
+            return this.makeDirectory(join(targetPath, folder));
           });
       }) // List.map() : return List
     );
@@ -76,31 +77,57 @@ class Photo {
   classifyFiles = (fileList) => {
     return Promise.all(
       fileList.map((file) => {
-        const extension = path.extname(file);
-        const reg = new RegExp('_E');
+        const extension = extname(file);
         // 동영상
-        if (extension === '.mp4' || extension === '.mov') {
+        if (this.isVideo(file)) {
           return this.move(file, 'video');
           // 캡쳐
-        } else if (extension === '.png' || extension === '.aae') {
+        } else if (this.isCaptured(file)) {
           return this.move(file, 'captured');
           // 보정 있는 원본 사진
-        } else if (reg.test(file)) {
-          const findFile = file.replace('E', '');
-          return this.move(findFile, 'duplicated');
+        } else if (this.isDuplicated(file)) {
+          const originalFile = file.replace('E', '');
+          return this.move(originalFile, 'duplicated');
         }
       })
     );
   };
+  /**
+   * Is video file
+   * @param {*} fileName file + extension
+   * @returns boolean
+   */
+  isVideo = (fileName) => {
+    const reg = /([.]mp4|[.]mov)$/m;
+    return reg.test(fileName);
+  };
+  /**
+   * Is Captured file
+   * @param {*} fileName
+   * @returns boolean
+   */
+  isCaptured = (fileName) => {
+    const reg = /([.]png|[.]aae)$/m;
+    return reg.test(fileName);
+  };
+  /**
+   * Is file duplicated
+   * @param {*} fileName file + extension
+   * @returns boolean
+   */
+  isDuplicated = (fileName) => {
+    const reg = /_E/;
+    return reg.test(fileName);
+  };
 
   /**
    * move file
-   * @param {*} fileName
-   * @returns
+   * @param {*} fileName file + extension
+   * @returns void
    */
   move = (fileName, targetFolder) => {
-    const targetFile = path.join(this.targetPath, fileName);
-    const moveFile = path.join(this.targetPath, targetFolder, fileName);
+    const targetFile = join(this.targetPath, fileName);
+    const moveFile = join(this.targetPath, targetFolder, fileName);
     return fs
       .rename(targetFile, moveFile)
       .then(() => {
@@ -109,6 +136,7 @@ class Photo {
       .catch(() => {
         fs.stat(moveFile)
           .then(() => {
+            if (extname(fileName) === '.jpg') return; // 이 코드는 개선 필요
             console.log(`${fileName}은 이미 이동되었습니다.`);
           })
           .catch(() => {
