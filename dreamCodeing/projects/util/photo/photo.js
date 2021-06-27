@@ -1,32 +1,31 @@
 const fs = require('fs').promises;
 const { join, extname } = require('path');
+const os = require('os');
 
 /**
  * 요구사항에 따른 파일 분류용 클래스
- * <pre>
+ *
  * 핵심 목표
  * - nodejs의 특성에 맞게 비동기를 적절하게 사용한다.
  * - 큰 흐름에 있어서는 동기적으로 만들어서 어떤 일을 하는지 명확하게 한다.
  * <pre>
  */
 class Photo {
-  constructor() {
-    this.DEFAULT_PATH = 'C:/VS_code/dreamCodeing/projects/util/Pictures';
+  constructor(targetPath) {
+    this.targetPath = targetPath;
     this.folderList = ['video', 'captured', 'duplicated'];
-    this.targetPath = '';
   }
 
-  run = async (target) => {
-    this.targetPath = join(this.DEFAULT_PATH, target);
+  run = async () => {
     try {
       // 분류할 폴더 생성
-      await this.createDirectorys(this.targetPath);
+      await this.createDirectorys();
       // 파일 리스트 가져오기
       const fileList = await fs.readdir(this.targetPath);
       // 파일 분류 실행
       await this.classifyFiles(fileList);
 
-      console.log('파일 분류 완료!!\n프로그램을 종료합니다.');
+      console.info('파일 분류 완료!!\n프로그램을 종료합니다.');
     } catch (e) {
       console.error(e);
     }
@@ -37,17 +36,17 @@ class Photo {
    * @param {*} path A path is file full name
    * @returns Promise
    */
-  createDirectorys = (targetPath) => {
+  createDirectorys = () => {
     // Promise.all(List.map()) : 반복된 비동기를 일괄로 처리하는 방법
     return Promise.all(
       this.folderList.map((folder) => {
         return fs
-          .stat(join(targetPath, folder))
+          .stat(join(this.targetPath, folder))
           .then(() => {
             return true;
           })
           .catch(() => {
-            return this.makeDirectory(join(targetPath, folder));
+            return this.makeDirectory(join(this.targetPath, folder));
           });
       }) // List.map() : return List
     );
@@ -84,9 +83,8 @@ class Photo {
         } else if (this.isCaptured(file)) {
           return this.move(file, 'captured');
           // 보정 있는 원본 사진
-        } else if (this.isDuplicated(file)) {
-          const originalFile = file.replace('E', '');
-          return this.move(originalFile, 'duplicated');
+        } else if (this.isDuplicated(file, fileList)) {
+          return this.move(file, 'duplicated');
         }
       })
     );
@@ -97,7 +95,7 @@ class Photo {
    * @returns boolean
    */
   isVideo = (fileName) => {
-    const reg = /([.]mp4|[.]mov)$/m;
+    const reg = /([.]mp4|[.]mov)$/gm;
     return reg.test(fileName);
   };
   /**
@@ -106,7 +104,7 @@ class Photo {
    * @returns boolean
    */
   isCaptured = (fileName) => {
-    const reg = /([.]png|[.]aae)$/m;
+    const reg = /([.]png|[.]aae)$/gm;
     return reg.test(fileName);
   };
   /**
@@ -114,9 +112,16 @@ class Photo {
    * @param {*} fileName file + extension
    * @returns boolean
    */
-  isDuplicated = (fileName) => {
-    const reg = /_E/;
-    return reg.test(fileName);
+  isDuplicated = (fileName, fileList) => {
+    // TODO : (수정) 원본 사진을 duplicated로 보낸다. 그러므로 원본을 찾아야 한다.
+    // 기존 코드는 수정본을 찾아서 처리했다. 그로인해 일관성 없는 코드 구조를 가지게 되었다.
+    if (!fileName.startsWith('IMG_') || fileName.startsWith('IMG_E')) {
+      return false;
+    }
+    // 파일 리스트에서 원본파일을 기준으로 수정 파일 있는지 확인
+    const modFile = `IMG_E${fileName.split('_')[1]}`;
+    const found = fileList.find((f) => f.includes(modFile));
+    return !!found;
   };
 
   /**
@@ -130,13 +135,12 @@ class Photo {
     return fs
       .rename(targetFile, moveFile)
       .then(() => {
-        return console.log(`move ${fileName} to ${targetFolder}`);
+        return console.info(`move ${fileName} to ${targetFolder}`);
       })
       .catch(() => {
         fs.stat(moveFile)
           .then(() => {
-            if (extname(fileName) === '.jpg') return; // 이 코드는 개선 필요
-            console.log(`${fileName}은 이미 이동되었습니다.`);
+            console.info(`${fileName}은 이미 이동되었습니다.`);
           })
           .catch(() => {
             throw new Error('에러 발생! 파일을 이동중 에러가 발생했습니다.');
@@ -145,9 +149,26 @@ class Photo {
   };
 }
 
-if (process.argv[2] === undefined) {
-  console.log('사용할 폴더를 입력하세요.');
-  return false;
-} else {
-  new Photo().run(process.argv[2]);
-}
+// TODO : 강의를 보고 보완한 코드
+processRun = async () => {
+  const exists = (workingDir) => {
+    return fs
+      .stat(workingDir) //
+      .catch((e) => {
+        return false;
+      });
+  };
+  // 1. 사용자 입력 정보 가져오기
+  const folder = process.argv[2] || '';
+  const workingDir = join(os.homedir(), '_Pictures', folder); // os.homedir() : C:\\Uesers\\1994d
+
+  if (!folder || !(await exists(workingDir))) {
+    console.error('Please enter folder name in Pictures');
+    return;
+  } else {
+    // 2. 폴더 생성, 3. 조건별 분류 시작
+    new Photo(workingDir).run();
+  }
+};
+
+processRun();
