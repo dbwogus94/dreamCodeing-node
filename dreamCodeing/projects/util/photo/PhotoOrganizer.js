@@ -10,10 +10,17 @@ const os = require('os');
  * - 큰 흐름에 있어서는 동기적으로 만들어서 어떤 일을 하는지 명확하게 한다.
  * <pre>
  */
-class Photo {
-  constructor(targetPath) {
+
+
+class PhotoOrganizer {
+  /**
+   * PhotoOrganizer 생성자
+   * @param {*} targetPath 정리 해야할 파일이 있는 폴더 경로
+   * @param {*} folderList 조건에 따라 분류 해야하는 폴더 리스트
+   */
+  constructor(targetPath, folderList) {
     this.targetPath = targetPath;
-    this.folderList = ['video', 'captured', 'duplicated'];
+    this.folderList = folderList;
   }
 
   run = async () => {
@@ -167,7 +174,7 @@ processRun = async () => {
     return;
   } else {
     // 2. 폴더 생성, 3. 조건별 분류 시작
-    new Photo(workingDir).run();
+    new PhotoOrganizer(workingDir, ['video', 'captured', 'duplicated']).run();
   }
 };
 
