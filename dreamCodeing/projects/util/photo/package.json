@@ -2,7 +2,7 @@
   "name": "photo",
   "version": "1.0.0",
   "description": "project photo file organized",
-  "main": "photo.js",
+  "main": "reset-file.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon app"
