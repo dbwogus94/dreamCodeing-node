@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      // fetch API CORS 테스트용
+      fetch('http://localhost:8080/', { method: 'GET' }) //
+        .then(console.log)
+        .catch(console.error);
+
+      /* ** fetch API 이슈 : https://velog.io/@adam2/2019-12-25-1512-%EC%9E%91%EC%84%B1%EB%90%A8
+        fetch API를 사용하여 DELETE 요청을 하고 
+        서버에서 리다이렉션을 응답을 보내면 
+        처리하지 못하고 에러가 발생한다. */
+    </script>
+  </body>
+</html>
