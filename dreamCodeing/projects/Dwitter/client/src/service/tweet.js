@@ -9,67 +9,81 @@ export default class TweetService {
   //     url: 'https://widgetwhats.com/app/uploads/2019/11/free-profile-photo-whatsapp-1.png',
   //   },
   // ];
-  url = 'http://localhost:8080/tweets';
+
+  // 생성자를 통해 base URL을 받도록 설정
+  constructor(baseURL) {
+    this.baseURL = baseURL;
+  }
 
   async getTweets(username) {
-    const res = await fetch(this.url, { method: 'GET' });
-    const tweets = await res.json();
-    return username //
-      ? tweets.filter(tweet => tweet.username === username)
-      : tweets;
+    const query = username ? `?username=${username}` : '';
+
+    // 서버와 통신
+    const response = await fetch(`${this.baseURL}/tweets${query}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    // 서버에서 받은 데이터 파싱
+    const data = await response.json();
+
+    // 에러 처리
+    if (response.status !== 200) {
+      throw new Error(data.message);
+    }
+
+    return data;
   }
 
   async postTweet(text) {
-    const tweet = {
-      // id: Date.now(),
-      // createdAt: new Date(),
-      name: 'Ellie',
-      username: 'ellie',
-      text,
-      url: 'https://widgetwhats.com/app/uploads/2019/11/free-profile-photo-whatsapp-4-300x300.png',
-    };
-
-    const reqData = {
+    const requestData = {
       method: 'POST',
-      body: JSON.stringify(tweet),
+      body: JSON.stringify({
+        name: 'Ellie',
+        username: 'ellie',
+        text,
+      }),
       headers: {
         'Content-Type': 'application/json',
       },
     };
 
-    const res = await fetch(this.url, reqData);
-    const tweets = await res.json();
-    return tweets[0];
+    const response = await fetch(`${this.baseURL}/tweets`, requestData);
+
+    const data = await response.json();
+
+    if (response.status !== 201) {
+      throw new Error(response.message);
+    }
+
+    return data;
   }
 
   async deleteTweet(tweetId) {
-    const res = await fetch(this.url + '/' + tweetId, { method: 'DELETE' });
-    if (res.status === 204) {
+    const response = await fetch(`${this.baseURL}/tweets/${tweetId}`, { method: 'DELETE' });
+
+    if (response.status !== 204) {
+      throw new Error(response.message);
     }
-    //this.tweets = this.tweets.filter(tweet => tweet.id !== tweetId);
   }
 
   async updateTweet(tweetId, text) {
-    const request = await fetch(this.url, { method: 'GET' });
-    const tweets = await request.json();
-
-    const tweet = tweets.find(tweet => tweet.id === tweetId);
-
-    if (!tweet) {
-      throw new Error('tweet not found!');
-    }
-    tweet.text = text;
-
-    const reqData = {
+    const requestData = {
       method: 'PUT',
-      body: JSON.stringify(tweet),
+      body: JSON.stringify({ text }),
       headers: {
         'Content-Type': 'application/json',
       },
     };
 
-    const res = await fetch(this.url + '/' + tweetId, reqData);
-    const newTweet = await res.json();
-    return newTweet;
+    const response = await fetch(`${this.baseURL}/tweets/${tweetId}`, requestData);
+
+    const data = await response.json();
+
+    if (response.status !== 201) {
+      throw new Error(response.message);
+    }
+
+    return data;
   }
 }
