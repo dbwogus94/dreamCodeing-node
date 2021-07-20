@@ -51,7 +51,7 @@ export const getTweet = async id => {
 /**
  * Create Tweet
  * @param {*} body
- * @returns tweet Array
+ * @returns tweet
  */
 export const createTweet = async body => {
   const tweets = await getAllTweets();
@@ -63,8 +63,11 @@ export const createTweet = async body => {
     return (newTweet[key] = body[key]);
   });
   tweets.unshift(newTweet);
+  // 1. 작성 : 신규 tweet을 추가한 tweets을 파일에 새로 작성
   await fileUtil.writeFile(tweets);
-  return await getAllTweets();
+  // 2. 조회 : DB파일에서 방금 추가한 tweet 찾아서 리턴한다.
+  const newTweets = await getAllTweets();
+  return newTweets.find(tweet => tweet.id === newId);
 };
 /**
  * Update Tweet
