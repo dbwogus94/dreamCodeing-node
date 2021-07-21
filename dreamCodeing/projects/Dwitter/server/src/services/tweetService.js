@@ -1,7 +1,10 @@
 import * as fileUtil from '../data/fileUtil.js';
 
 /**
- * 서비스
+ * model 계층
+ * - service 계층 또는 data 계층이라고 한다.
+ * - 리소스를 조회, 조작, 가공하는 계층이다.
+ * - spring의 경우 Model 계층을 service와 DAO 계층으로 나누어서 사용하였다.
  */
 
 /**
@@ -28,7 +31,7 @@ export const getAllTweets = async () => {
 export const getUserTweets = async username => {
   const tweets = await getAllTweets();
   const findList = tweets.filter(tweet => {
-    return tweet.username == username;
+    return tweet.username === username;
   });
   return findList.length //
     ? findList
