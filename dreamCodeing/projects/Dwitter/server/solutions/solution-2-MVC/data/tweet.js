@@ -31,19 +31,19 @@ let tweets = [
 ];
 
 // 전체 조회
-export function getAll() {
+export async function getAll() {
   return tweets;
 }
 // username으로 조회
-export function getAllByUsername(username) {
-  return tweets.filter(tweet => (tweet.username = username));
+export async function getAllByUsername(username) {
+  return tweets.filter(tweet => tweet.username === username);
 }
 // id로 조회
-export function getById(id) {
+export async function getById(id) {
   return tweets.find(tweet => tweet.id === id); // 없으면 undefined
 }
 // tweet 작성
-export function create(text, name, username, url) {
+export async function create(text, name, username, url) {
   const tweet = {
     id: Date.now().toString(),
     text,
@@ -56,14 +56,14 @@ export function create(text, name, username, url) {
   return tweet;
 }
 // tweet 수정
-export function update(id, text) {
-  const tweet = tweets.filter(tweet => tweet.id === id);
+export async function update(id, text) {
+  const tweet = tweets.find(tweet => tweet.id === id);
   if (tweet) {
     tweet.text = text;
   }
   return tweet;
 }
 // tweet 삭제
-export function remove(id) {
+export async function remove(id) {
   tweets = tweets.filter(tweet => tweet.id !== id);
 }

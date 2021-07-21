@@ -15,17 +15,17 @@
 // controller에서 data 계층을 사용한다.
 import * as tweetRepository from '../data/tweet.js';
 
-export function getTweets(req, res) {
+export async function getTweets(req, res) {
   const username = req.query.username;
-  const data = username //
+  const data = await (username //
     ? tweetRepository.getAllByUsername(username)
-    : tweetRepository.getAll();
+    : tweetRepository.getAll());
   return res.status(200).json(data);
 }
 
-export function getTweet(req, res) {
+export async function getTweet(req, res) {
   const id = req.params.id;
-  const tweet = tweetRepository.getById(id);
+  const tweet = await tweetRepository.getById(id);
   if (tweet) {
     return res.status(200).json(tweet);
   } else {
@@ -33,16 +33,16 @@ export function getTweet(req, res) {
   }
 }
 
-export function createTweet(req, res) {
+export async function createTweet(req, res) {
   const { text, name, username, url } = req.body;
-  const tweet = tweetRepository.create(text, name, username, url);
+  const tweet = await tweetRepository.create(text, name, username, url);
   return res.status(201).json(tweet);
 }
 
-export function updateTweet(req, res) {
+export async function updateTweet(req, res) {
   const id = req.params.id;
   const text = req.body.text;
-  const tweet = tweetRepository.update(id, text);
+  const tweet = await tweetRepository.update(id, text);
   if (tweet) {
     return res.status(201).json(tweet);
   } else {
@@ -50,8 +50,8 @@ export function updateTweet(req, res) {
   }
 }
 
-export function deleteTweet(req, res) {
+export async function deleteTweet(req, res) {
   const id = req.params.id;
-  tweetRepository.remove(id);
+  await tweetRepository.remove(id);
   return res.sendStatus(204);
 }
