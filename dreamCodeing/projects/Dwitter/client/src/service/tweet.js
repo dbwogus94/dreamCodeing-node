@@ -10,64 +10,55 @@ export default class TweetService {
   //   },
   // ];
 
-  // 생성자를 통해 base URL을 받도록 설정
-  constructor(baseURL) {
-    this.baseURL = baseURL;
+  // http 모듈에서 base URL을 받는다.
+  constructor(http) {
+    this.http = http;
   }
 
   async getTweets(username) {
     const query = username ? `?username=${username}` : '';
-
-    // 서버와 통신
+    /* http 모듈로 변경
     const response = await fetch(`${this.baseURL}/tweets${query}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
     });
-
-    // 서버에서 받은 데이터 파싱
     const data = await response.json();
-
-    // 에러 처리
     if (response.status !== 200) {
       throw new Error(data.message);
-    }
-
-    return data;
+    } */
+    return this.http.fetch(`/tweets/${query}`, { method: 'GET' });
   }
 
   async postTweet(text) {
+    /* http 모듈로 변경
     const requestData = {
       method: 'POST',
-      body: JSON.stringify({
-        name: 'Ellie',
-        username: 'ellie',
-        text,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      body: JSON.stringify({ name: 'Ellie', username: 'ellie', text, }),
+      headers: { 'Content-Type': 'application/json', },
     };
-
     const response = await fetch(`${this.baseURL}/tweets`, requestData);
-
     const data = await response.json();
-
     if (response.status !== 201) {
       throw new Error(response.message);
-    }
-
-    return data;
+    }*/
+    return this.http.fetch(`/tweets`, {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Ellie', username: 'ellie', text }),
+    });
   }
 
   async deleteTweet(tweetId) {
+    /* http 모듈로 변경
     const response = await fetch(`${this.baseURL}/tweets/${tweetId}`, { method: 'DELETE' });
-
     if (response.status !== 204) {
       throw new Error(response.message);
-    }
+    }*/
+    return this.http.fetch(`/tweets/${tweetId}`, {
+      method: 'DELETE',
+    });
   }
 
   async updateTweet(tweetId, text) {
+    /* http 모듈로 변경
     const requestData = {
       method: 'PUT',
       body: JSON.stringify({ text }),
@@ -75,15 +66,14 @@ export default class TweetService {
         'Content-Type': 'application/json',
       },
     };
-
     const response = await fetch(`${this.baseURL}/tweets/${tweetId}`, requestData);
-
     const data = await response.json();
-
     if (response.status !== 201) {
       throw new Error(response.message);
-    }
-
-    return data;
+    }*/
+    return this.http.fetch(`/tweets/${tweetId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ text }),
+    });
   }
 }
