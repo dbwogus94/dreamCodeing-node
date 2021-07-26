@@ -1,6 +1,6 @@
 // validation 편의 기능을 제공하는 외부 미들웨어
 import { body, validationResult } from 'express-validator';
-import { validate } from '../meddleware/vaildator.js';
+import { validate } from '../middleware/vaildator.js';
 
 const errMsg = {
   notEmpty: '필수 값입니다.',
