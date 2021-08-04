@@ -48,13 +48,13 @@ const updateTweet = async (req, res) => {
   const resJson = await tweetService.updateTweet(req.params.id, req.body);
   return resJson //
     ? res.status(201).json(resJson)
-    : res.status(404).json({ message: `Tweet id(${id}) not found` });
+    : res.status(404).json({ message: `Tweet id(${req.params.id}) not found` });
 };
 // Delete Tweet
 const deleteTweet = async (req, res) => {
   return (await tweetService.deleteTweet(req.params.id)) //
     ? res.sendStatus(204)
-    : res.status(404).json({ message: `Tweet id(${id}) not found` });
+    : res.status(404).json({ message: `Tweet id(${req.params.id}) not found` });
 };
 
 export { getTweets, getTweet, createTweet, updateTweet, deleteTweet };
