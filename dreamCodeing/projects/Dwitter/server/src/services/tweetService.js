@@ -1,4 +1,4 @@
-import * as fileUtil from '../data/fileUtil.js';
+import * as tweetRepository from '../data/tweetRepository.js';
 
 /**
  * model 계층
@@ -16,7 +16,7 @@ import * as fileUtil from '../data/fileUtil.js';
 export const getAllTweets = async () => {
   // 파일을 읽어온다.
   try {
-    return await fileUtil.readFile();
+    return await tweetRepository.readTweets();
   } catch (e) {
     return [];
   }
@@ -67,7 +67,7 @@ export const createTweet = async body => {
   });
   tweets.unshift(newTweet);
   // 1. 작성 : 신규 tweet을 추가한 tweets을 파일에 새로 작성
-  await fileUtil.writeFile(tweets);
+  await tweetRepository.writeTweets(tweets);
   // 2. 조회 : DB파일에서 방금 추가한 tweet 찾아서 리턴한다.
   const newTweets = await getAllTweets();
   return newTweets.find(tweet => tweet.id === newId);
@@ -92,7 +92,7 @@ export const updateTweet = async (id, body) => {
   tweets[findIndex].createdAt = new Date(Date.now());
 
   // 수정 내용 DB파일에 적용
-  await fileUtil.writeFile(tweets);
+  await tweetRepository.writeTweets(tweets);
   const newTweets = await getAllTweets();
   return newTweets[findIndex];
 };
@@ -112,10 +112,10 @@ export const deleteTweet = async id => {
   // 삭제
   tweets.splice(findIndex, 1);
   // 삭제 DB파일에 반영
-  await fileUtil.writeFile(tweets);
+  await tweetRepository.writeTweets(tweets);
 
   // 성공적으로 삭제 됐는지 확인
-  const newTweets = await fileUtil.readFile();
+  const newTweets = await tweetRepository.readTweets();
   return getTweetIndex(newTweets, id) === -1 //
     ? true
     : false;
