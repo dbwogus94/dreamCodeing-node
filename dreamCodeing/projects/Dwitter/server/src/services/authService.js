@@ -16,7 +16,7 @@ const saltRound = 10;
 
 /**
  * Sign Up
- * @param {*} user
+ * @param {object} user
  * @returns user
  * - user : 회원가입 성공
  * - undefined : 저장 실패
@@ -37,8 +37,8 @@ export const signUp = async user => {
 
 /**
  * login
- * @param {*} username
- * @param {*} password
+ * @param {string} username
+ * @param {string} password
  * @returns JWT
  * JWT : 로그인 성공
  * false : 로그인 실패

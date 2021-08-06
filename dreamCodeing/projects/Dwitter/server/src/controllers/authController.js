@@ -1,10 +1,10 @@
 import * as authService from '../services/authService.js';
 
 /**
- * 회원가입 로직 실행 : 회원가입 -> JWT 발행
- * @param {*} req
- * @param {*} res
- * @param {*} next
+ * 회원가입 로직 실행 : 회원가입 -> 로그인 수행
+ * @param {object} req
+ * @param {object} res
+ * @param {function} next
  * @returns
  * - success : 200 {token, username}
  * - fail : 400 {message}
@@ -25,9 +25,9 @@ export const signUp = async (req, res, next) => {
 
 /**
  * login
- * @param {*} req
- * @param {*} res
- * @param {*} next
+ * @param {object} req
+ * @param {object} res
+ * @param {function} next
  * @returns
  * - success : 200 {token, username}
  * - fail : 400 {message}

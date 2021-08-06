@@ -11,7 +11,7 @@ export const getUsers = async () => {
 
 /**
  * select by username
- * @param {*} username
+ * @param {string} username
  * @returns
  * - user
  * - undefined
@@ -24,7 +24,7 @@ export const findByUsername = async username => {
 
 /**
  * create user
- * @param {*} user
+ * @param {object} user
  * @returns boolean
  */
 export const createUser = async user => {

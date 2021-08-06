@@ -11,19 +11,14 @@ import * as tweetRepository from '../data/tweetRepository.js';
  * tweet Array
  * @returns tweet Array
  * - Array : tweet Array
- * - [] : 파일이 없는 경우, 또는 에러
  */
 export const getAllTweets = async () => {
   // 파일을 읽어온다.
-  try {
-    return await tweetRepository.readTweets();
-  } catch (e) {
-    return [];
-  }
+  return await tweetRepository.readTweets();
 };
 /**
  * select username
- * @param {*} username
+ * @param {string} username
  * @returns tweet Array
  * - Array : tweet Array
  * - false : 일치하는 작성자가 없는 경우
@@ -39,7 +34,7 @@ export const getUserTweets = async username => {
 };
 /**
  * get Tweet
- * @param {*} id
+ * @param {string} id
  * @returns tweet
  * - tweet : 찾은 자원
  * - false : 자원이 없는 경우
@@ -53,7 +48,7 @@ export const getTweet = async id => {
 };
 /**
  * Create Tweet
- * @param {*} body
+ * @param {object} tweet
  * @returns tweet
  */
 export const createTweet = async body => {
@@ -74,8 +69,8 @@ export const createTweet = async body => {
 };
 /**
  * Update Tweet
- * @param {*} id
- * @param {*} body
+ * @param {string} id
+ * @param {object} body
  * @returns tweet
  *  - tweet : 수정된 tweet
  *  - false : 자원이 없는 경우
@@ -98,7 +93,7 @@ export const updateTweet = async (id, body) => {
 };
 /**
  * Delete Tweet
- * @param {*} id
+ * @param {steing} id
  * @returns boolean
  * - true : 자원을 성공적으로 삭제 한 경우
  * - fales : 자원이 없는 경우
@@ -121,7 +116,12 @@ export const deleteTweet = async id => {
     : false;
 };
 
-//
+/**
+ * find index by tweet id
+ * @param {objcet} tweets
+ * @param {string} id tweetId
+ * @returns
+ */
 const getTweetIndex = (tweets, id) => {
   return tweets.findIndex(tweet => {
     return tweet.id === Number(id);
