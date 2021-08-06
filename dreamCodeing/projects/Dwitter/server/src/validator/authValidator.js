@@ -1,5 +1,5 @@
 import { body } from 'express-validator';
-import { errMsg, validate } from '../middleware/vaildator.js';
+import { errMsg, validate, validate_detailMsg } from '../middleware/vaildator.js';
 
 const firstToUpperCase = value => {
   return value.charAt(0).toUpperCase() + value.slice(1);
@@ -17,7 +17,7 @@ export const signupValidator = [
     .trim()
     .notEmpty()
     .withMessage(errMsg.notEmpty),
-  body('name') // 이름 : 영어 -> 첫글자 대문자 -> 필수
+  body('name') // 이름 : 영어 -> 첫글자 대문자로 변경 -> 필수
     .trim()
     .isAlpha()
     .withMessage(errMsg.alpha)
@@ -35,6 +35,7 @@ export const signupValidator = [
     .isURL()
     .withMessage(errMsg.url),
   validate,
+  //validate_detailMsg,
 ];
 
 export const loginValidator = [
