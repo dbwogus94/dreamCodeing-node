@@ -11,13 +11,14 @@ import * as authService from '../services/authService.js';
  */
 export const signUp = async (req, res, next) => {
   // 회원가입
-  const user = await authService.signUp(req.body);
-  if (!user) {
+  const user = req.body;
+  const isSuccess = await authService.signUp(user);
+  if (!isSuccess) {
     return res.status(400).json({ message: `${req.body.username}는 이미 사용중인 username 입니다` });
   }
-  // JWT 발행
+  // login(JWT 발행) 실행
   return res.status(200).json({
-    token: await authService.createJWT(user.username, user.password),
+    token: await authService.login(user.username, user.password),
     username: user.username,
   });
 };
