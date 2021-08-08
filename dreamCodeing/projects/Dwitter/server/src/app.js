@@ -7,14 +7,15 @@ import cookieParser from 'cookie-parser';
 // 모든 라우터 마다 선언해야한다.
 import 'express-async-errors'; // 비동기 에러를 미들웨어가 잡을 수 있도록 처리
 
+// dotenv를 사용한 환경설정
+import '../src/config/env.js';
+
 // 라우터
 import indexRouter from './routes/indexRouter.js';
 import tweetRouter from './routes/tweetRouter.js';
 import authRouter from './routes/authRouter.js';
 
 const app = express();
-const port = 8080;
-const corsOptions = { origin: 'http://127.0.0.1:3000' };
 
 /* 1. 미들웨어 설정 : 파서, 로가, 헤더 */
 app.use(express.json());
@@ -40,4 +41,4 @@ app.use((req, res, next) => {
   res.sendStatus(404);
 });
 
-app.listen(port);
+app.listen(process.env.PORT);

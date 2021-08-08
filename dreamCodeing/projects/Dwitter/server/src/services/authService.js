@@ -3,17 +3,6 @@ import bcrypt from 'bcrypt'; // 비밀번호 암호화
 import * as userService from '../services/userService.js';
 import { ObjUtil } from '../util/util.js';
 
-// TODO : 설정 파일을 만들어서 외부에서 설정하도록 변경 해야한다.
-// jwt 설정
-export const secret = 'Tmkiqod&nGrmn7MS#udJmOlZSv8aZ&K8';
-const JWTOptions = {
-  expiresIn: '2h', // 만료시간
-  issuer: 'Dwitter.com', // 발행인
-  subject: 'userInfo', // 내용
-};
-// bcrypt 설정
-const saltRound = 10;
-
 /**
  * Sign Up
  * @param {object} user
@@ -27,7 +16,7 @@ export const signUp = async user => {
     return false; // 중복된 name
   }
   // 비밀번호 암호화 실행
-  const hashed = await bcrypt.hash(user.password, saltRound);
+  const hashed = await bcrypt.hash(user.password, Number(process.env.BCRYPT_ROUND));
   // **수정 : 깊은 복사로직으로 변경
   const newUser = ObjUtil.copyObj(user);
   newUser.password = hashed;
@@ -55,7 +44,12 @@ export const login = async (username, password) => {
   const result = await bcrypt.compare(password, user.password);
   delete user.password; // jwt를 생성하기전에 패스워드는 제거한다.
 
+  const JWTOptions = {
+    expiresIn: process.env.JWT_EXPIRESIN, // 만료시간
+    issuer: process.env.JWT_ISSUER, // 발행인
+    subject: process.env.JWT_SUHJECT, // 내용
+  };
   return result //
-    ? jwt.sign(user, secret, JWTOptions) // 비밀번호 일치
+    ? jwt.sign(user, process.env.JWT_SECRET, JWTOptions) // 비밀번호 일치
     : false; // 비밀번호가 일치하지 않는다면
 };
