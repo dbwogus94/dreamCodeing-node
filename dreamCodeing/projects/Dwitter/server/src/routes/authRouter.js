@@ -12,6 +12,7 @@ router.post('/signup', signupValidator, authController.signUp);
 router.post('/login', loginValidator, authController.login);
 
 // auth/me
+// TODO: 솔루션 이후 진행
 router.get('/me');
 
 export default router;
