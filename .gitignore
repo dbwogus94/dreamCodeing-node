@@ -110,6 +110,12 @@ dist
 package-lock.json
 
 .DS_Store
+
+
+//
 dreamCodeing/projects/Dwitter/.vscode/launch.json
-dreamCodeing/projects/Dwitter/server/src/data/database/tweets copy.json
-dreamCodeing/projects/Dwitter/server/src/data/database/users copy.json
+users.json
+users copy.json
+tweets.json
+tweets copy.json
+

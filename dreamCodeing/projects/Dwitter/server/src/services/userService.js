@@ -26,13 +26,16 @@ export const findByUsername = async username => {
  * create user
  * @param {object} user
  * @returns boolean
+ * - true : 저장 성공
+ * - false : 저장 실패
  */
 export const createUser = async user => {
   // 유저저장소에 유저 추가
   const users = await userRepository.readUsers();
-  users.push(user);
+  // id를 부여한다.
+  users.push({ id: Date.now().toString(), ...user });
+  // DB에 저장
   await userRepository.writeUsers(users);
-
   // 성공확인을 위해 추가된 유저를 다시 조회
   return (await findByUsername(user.username)) //
     ? true
