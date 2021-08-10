@@ -3,6 +3,8 @@ import {} from 'express-async-errors';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validator.js';
 import * as authController from '../controller/auth.js';
+// auth가 유요한지 확인하는 미들웨어
+import { isAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -39,5 +41,8 @@ const validateSignup = [
 router.post('/signup', validateSignup, authController.signup);
 
 router.post('/login', validateCredential, authController.login);
+
+// 사용자의 토큰이 유효한지 확인하는 API
+router.get('/me', isAuth, authController.me);
 
 export default router;
