@@ -34,8 +34,9 @@ export async function getTweet(req, res) {
 }
 
 export async function createTweet(req, res) {
-  const { text, name, username, url } = req.body;
-  const tweet = await tweetRepository.create(text, name, username, url);
+  const { text } = req.body;
+  const userId = req.userId; // middleware/auth.js에서 생성한 userId 사용
+  const tweet = await tweetRepository.create(text, userId);
   return res.status(201).json(tweet);
 }
 
