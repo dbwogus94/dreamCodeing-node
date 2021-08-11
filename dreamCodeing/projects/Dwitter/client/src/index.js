@@ -12,15 +12,17 @@ import { AuthErrorEventBus } from './context/AuthContext';
 // 1) HttpClient, TokenStorage 클래스 추가
 import HttpClient from './network/http';
 import TokenStorage from './db/token';
+
+// authErrorEventBus.notify()가 호출되면 로그인 페이지로 이동된다.
+// HttpClient에서 401(인증 실패)코드가 응답되면 authErrorEventBus.notify()를 호출한다.
+const authErrorEventBus = new AuthErrorEventBus();
 // 2) HttpClient, TokenStorage 인스턴스화
 const baseURL = process.env.REACT_APP_BASE_URL;
-const httpClient = new HttpClient(baseURL);
+const httpClient = new HttpClient(baseURL, authErrorEventBus);
 const tokenStorage = new TokenStorage();
 // 3) 생성자에 인자로 전달(의존성 주입)
 const tweetService = new TweetService(httpClient, tokenStorage);
 const authService = new AuthService(httpClient, tokenStorage);
-
-const authErrorEventBus = new AuthErrorEventBus();
 
 ReactDOM.render(
   <React.StrictMode>

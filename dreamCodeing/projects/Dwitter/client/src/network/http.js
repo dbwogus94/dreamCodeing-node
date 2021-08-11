@@ -3,8 +3,9 @@
  * @param {*} url baseURL (도메인)
  */
 export default class HttpClient {
-  constructor(baseURL) {
+  constructor(baseURL, authErrorEventBus) {
     this.baseURL = baseURL;
+    this.authErrorEventBus = authErrorEventBus;
   }
   /**
    * fetch API util
@@ -43,7 +44,18 @@ export default class HttpClient {
         data && data.message //
           ? data.message
           : 'Something went wrong!';
-      throw new Error(message);
+      const error = new Error(message);
+
+      // 401 인증 실패 에러 처리
+      if (res.status === 401) {
+        // 인증이 실패하는 경우 this.authErrorEventBus.notify()가 호출된다.
+        // 호출되면 유저의 정보를 만료시키고 로그인 페이지로 이동시킨다.
+        this.authErrorEventBus.notify(error);
+        return;
+      }
+
+      // 401 이외의 에러는 에러를 던진다.
+      throw error;
     }
     return data;
   }

@@ -1,13 +1,4 @@
-import {
-  createContext,
-  createRef,
-  useCallback,
-  useContext,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useState,
-} from 'react';
+import { createContext, createRef, useCallback, useContext, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import Header from '../components/Header';
 import Login from '../pages/Login';
 
@@ -20,10 +11,16 @@ export function AuthProvider({ authService, authErrorEventBus, children }) {
 
   useImperativeHandle(contextRef, () => (user ? user.token : undefined));
 
+  // useEffect는 리엑트 렌더링 이후 실행된다.
   useEffect(() => {
-    authErrorEventBus.listen((err) => {
+    // AuthErrorEventBus 클래스의
+    // 인스턴스인 authErrorEventBus의 listen()를 호출한다.
+    // listen()는 callback를 설정하는 메서드이다.
+    authErrorEventBus.listen(err => {
       console.log(err);
       setUser(undefined);
+      // setUser()를 통해 로그인된 사용자를 초기화 한다.
+      // 그렇게 되면 로그인 페이지로 이동된다.
     });
   }, [authErrorEventBus]);
 
@@ -32,23 +29,13 @@ export function AuthProvider({ authService, authErrorEventBus, children }) {
   }, [authService]);
 
   const signUp = useCallback(
-    async (username, password, name, email, url) =>
-      authService
-        .signup(username, password, name, email, url)
-        .then((user) => setUser(user)),
+    async (username, password, name, email, url) => authService.signup(username, password, name, email, url).then(user => setUser(user)),
     [authService]
   );
 
-  const logIn = useCallback(
-    async (username, password) =>
-      authService.login(username, password).then((user) => setUser(user)),
-    [authService]
-  );
+  const logIn = useCallback(async (username, password) => authService.login(username, password).then(user => setUser(user)), [authService]);
 
-  const logout = useCallback(
-    async () => authService.logout().then(() => setUser(undefined)),
-    [authService]
-  );
+  const logout = useCallback(async () => authService.logout().then(() => setUser(undefined)), [authService]);
 
   const context = useMemo(
     () => ({
@@ -65,7 +52,7 @@ export function AuthProvider({ authService, authErrorEventBus, children }) {
       {user ? (
         children
       ) : (
-        <div className='app'>
+        <div className="app">
           <Header />
           <Login onSignUp={signUp} onLogin={logIn} />
         </div>
