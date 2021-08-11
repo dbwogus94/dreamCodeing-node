@@ -8,17 +8,19 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AuthErrorEventBus } from './context/AuthContext';
 
-/* ### HttpClient 의존성 주입 */
-// 1) HttpClient 모듈 추가
+/* ### 의존성 관리 */
+// 1) HttpClient, TokenStorage 클래스 추가
 import HttpClient from './network/http';
-
+import TokenStorage from './db/token';
+// 2) HttpClient, TokenStorage 인스턴스화
 const baseURL = process.env.REACT_APP_BASE_URL;
-// 2) HttpClient 모듈 생성
 const httpClient = new HttpClient(baseURL);
+const tokenStorage = new TokenStorage();
+// 3) 생성자에 인자로 전달(의존성 주입)
+const tweetService = new TweetService(httpClient, tokenStorage);
+const authService = new AuthService(httpClient, tokenStorage);
+
 const authErrorEventBus = new AuthErrorEventBus();
-const authService = new AuthService();
-// 3) tweetService 생성자에 인자로 전달
-const tweetService = new TweetService(httpClient);
 
 ReactDOM.render(
   <React.StrictMode>

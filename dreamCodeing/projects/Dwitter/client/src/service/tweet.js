@@ -1,79 +1,60 @@
 export default class TweetService {
-  // tweets = [
-  //   {
-  //     id: 1,
-  //     text: '드림코딩에서 강의 들으면 너무 좋으다',
-  //     createdAt: '2021-05-09T04:20:57.000Z',
-  //     name: 'Bob',
-  //     username: 'bob',
-  //     url: 'https://widgetwhats.com/app/uploads/2019/11/free-profile-photo-whatsapp-1.png',
-  //   },
-  // ];
-
-  // http 모듈에서 base URL을 받는다.
-  constructor(http) {
+  /**
+   * TweetService 생성자
+   * @param {*} http - HttpClient
+   * @param {*} tokenStorage - TokenStorage
+   */
+  constructor(http, tokenStorage) {
     this.http = http;
+    this.tokenStorage = tokenStorage;
   }
+
+  /* ### auth적용 : 
+      API 서버에 tweet관련 요청을 보내려면 헤더에 인증정보(jwt)가 필요하다.
+      - 모든 메서드에 요청시 인증정보 헤더를 포함하도록 추가하였음
+  */
 
   async getTweets(username) {
     const query = username ? `?username=${username}` : '';
-    /* http 모듈로 변경
-    const response = await fetch(`${this.baseURL}/tweets${query}`, {
+    return this.http.fetch(`/tweets/${query}`, {
       method: 'GET',
+      headers: this.getHeaders(),
     });
-    const data = await response.json();
-    if (response.status !== 200) {
-      throw new Error(data.message);
-    } */
-    return this.http.fetch(`/tweets/${query}`, { method: 'GET' });
   }
 
   async postTweet(text) {
-    /* http 모듈로 변경
-    const requestData = {
-      method: 'POST',
-      body: JSON.stringify({ name: 'Ellie', username: 'ellie', text, }),
-      headers: { 'Content-Type': 'application/json', },
-    };
-    const response = await fetch(`${this.baseURL}/tweets`, requestData);
-    const data = await response.json();
-    if (response.status !== 201) {
-      throw new Error(response.message);
-    }*/
     return this.http.fetch(`/tweets`, {
       method: 'POST',
-      body: JSON.stringify({ name: 'Ellie', username: 'ellie', text }),
-    });
-  }
-
-  async deleteTweet(tweetId) {
-    /* http 모듈로 변경
-    const response = await fetch(`${this.baseURL}/tweets/${tweetId}`, { method: 'DELETE' });
-    if (response.status !== 204) {
-      throw new Error(response.message);
-    }*/
-    return this.http.fetch(`/tweets/${tweetId}`, {
-      method: 'DELETE',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ text }),
+      // **수정: 작성자 정보 제거
+      // -> 작성자의 정보는 서버에서 로그인된 사용자(jwt)를 통해 생성한다.
     });
   }
 
   async updateTweet(tweetId, text) {
-    /* http 모듈로 변경
-    const requestData = {
-      method: 'PUT',
-      body: JSON.stringify({ text }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-    const response = await fetch(`${this.baseURL}/tweets/${tweetId}`, requestData);
-    const data = await response.json();
-    if (response.status !== 201) {
-      throw new Error(response.message);
-    }*/
     return this.http.fetch(`/tweets/${tweetId}`, {
       method: 'PUT',
+      headers: this.getHeaders(),
       body: JSON.stringify({ text }),
     });
+  }
+
+  async deleteTweet(tweetId) {
+    return this.http.fetch(`/tweets/${tweetId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+  }
+
+  // 인증정보 헤더를 리턴
+  getHeaders() {
+    const token = this.tokenStorage.getToken();
+    return {
+      Authorization: `Bearer ${token}`,
+      /* Authorization은 인증정보를 담는 위한 정식 헤더이다.
+          - Bearer는 인증정보가 token 형태임을 알리는 접두사(type)이다. 
+        */
+    };
   }
 }
