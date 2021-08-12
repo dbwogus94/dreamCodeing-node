@@ -53,4 +53,17 @@ export const login = async (req, res, next) => {
   // 이때 사용할 수 있는 코드가 401 코드이다.
 };
 
-export const me = (req, res, next) => {};
+/**
+ * me
+ * @param {object} req
+ * @param {object} res
+ * @param {function} next
+ * @returns
+ * - 200 { token, username }
+ */
+export const me = (req, res, next) => {
+  return res.status(200).json({
+    token: req.token,
+    username: req.username,
+  });
+};
