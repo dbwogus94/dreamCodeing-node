@@ -4,6 +4,8 @@ import 'express-async-errors';
 import * as tweetController from '../controllers/tweetController.js';
 // 유효성 검증 모듈
 import { postValidator, putValidator } from '../validator/tweetValidator.js';
+// jwt 토큰을 확인하는 미들웨어
+import { isAuth } from '../middleware/auth.js';
 
 /**
  * ### View
@@ -15,14 +17,14 @@ const router = express.Router();
 
 // GET /tweets
 // GET /tweets?username=:username
-router.get('/', tweetController.getTweets);
+router.get('/', isAuth, tweetController.getTweets);
 // GET /tweets/:id
-router.get('/:id', tweetController.getTweet);
+router.get('/:id', isAuth, tweetController.getTweet);
 // POST /tweets/:id
-router.post('/', postValidator, tweetController.createTweet);
+router.post('/', isAuth, postValidator, tweetController.createTweet);
 // PUT /tweets/:id
-router.put('/:id', putValidator, tweetController.updateTweet);
+router.put('/:id', isAuth, putValidator, tweetController.updateTweet);
 // DELETE /tweets/:id
-router.delete('/:id', tweetController.deleteTweet);
+router.delete('/:id', isAuth, tweetController.deleteTweet);
 
 export default router;

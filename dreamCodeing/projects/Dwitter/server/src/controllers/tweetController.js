@@ -36,16 +36,11 @@ const getTweet = async (req, res) => {
 };
 // Create Tweet
 const createTweet = async (req, res) => {
-  if (Object.keys(req.body).length === 0) {
-    // body가 없으면 400 응답
-    // TODO : 요청에 대한 유효성 검사는 라우터로 가야하지 않을까?
-    return res.status(400).json({ message: 'Bad Request, must have a request body', contentType: 'json' });
-  }
-  return res.status(201).json(await tweetService.createTweet(req.body));
+  return res.status(201).json(await tweetService.createTweet(req.body.text, req.id));
 };
 // Update Tweet
 const updateTweet = async (req, res) => {
-  const resJson = await tweetService.updateTweet(req.params.id, req.body);
+  const resJson = await tweetService.updateTweet(req.params.id, req.body.text);
   return resJson //
     ? res.status(201).json(resJson)
     : res.status(404).json({ message: `Tweet id(${req.params.id}) not found` });

@@ -4,9 +4,10 @@ import { validate, errMsg } from '../middleware/vaildator.js';
 
 export const postValidator = [
   body('text').trim().isLength({ min: 3 }).withMessage('3글자 이상 작성하세요').notEmpty().withMessage(errMsg.notEmpty),
-  body('username').trim().isAlpha().withMessage(errMsg.alpha).notEmpty().withMessage(errMsg.notEmpty).toLowerCase(),
-  body('name').trim().isAlpha().withMessage(errMsg.alpha).notEmpty().withMessage(errMsg.notEmpty),
-  body('url').trim().isURL().withMessage(errMsg.url),
+  // **수정 auth 적용으로 제거
+  // body('username').trim().isAlpha().withMessage(errMsg.alpha).notEmpty().withMessage(errMsg.notEmpty).toLowerCase(),
+  // body('name').trim().isAlpha().withMessage(errMsg.alpha).notEmpty().withMessage(errMsg.notEmpty),
+  // body('url').trim().isURL().withMessage(errMsg.url),
   validate,
 ];
 
