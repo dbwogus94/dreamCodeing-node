@@ -44,28 +44,3 @@ export const isAuth = async (req, res, next) => {
     next();
   });
 };
-
-/**
- * ### Authorization(인가)
- * tweet 작성자 권한이 있는지 확인
- * @param {object} req
- * @param {object} res
- * @param {function} next
- * @returns
- * - 404 {message} : 해당 자원이 없음 404응답.
- * - 403 {message} : 작성자가 아니기 때문에 403 응답
- */
-export const isWriter = async (req, res, next) => {
-  // 요청받은 tweet의 id를 통해 userId를 확인
-  const tweetId = req.params.id;
-  const tweet = await tweetService.getTweetById(tweetId);
-  // 자원이 없다면?
-  if (!tweet) {
-    return res.status(404).json({ message: `Tweet id(${req.params.id}) not found` });
-  }
-  // 작성자와 인증된 사용자가 다르다면?
-  if (tweet.userId !== req.id) {
-    return res.status(403).json({ message: `id(${req.params.id})의 작성자가 아닙니다.` });
-  }
-  next();
-};

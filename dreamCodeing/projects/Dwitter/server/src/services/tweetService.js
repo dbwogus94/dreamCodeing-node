@@ -55,7 +55,7 @@ export const createTweet = async (text, userId) => {
     // rollback()
   }
   // 성공시 : 방금 추가한 tweet 찾아서 리턴한다.
-  return await tweetRepository.findTweetById(result);
+  return await getTweetById(result);
 };
 /**
  * Update Tweet
@@ -78,7 +78,7 @@ export const updateTweet = async (id, text) => {
     // rollback()
   }
   // 성공시: 수정한 tweet을 리턴
-  return await tweetRepository.findTweetById(id);
+  return await getTweetById(id);
 };
 /**
  * Delete Tweet

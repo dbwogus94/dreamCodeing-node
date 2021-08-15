@@ -5,7 +5,7 @@ import * as tweetController from '../controllers/tweetController.js';
 // 유효성 검증 모듈
 import { postValidator, putValidator } from '../validator/tweetValidator.js';
 // jwt 토큰을 확인하는 미들웨어
-import { isAuth, isWriter } from '../middleware/auth.js';
+import { isAuth } from '../middleware/auth.js';
 
 /**
  * ### View
@@ -23,8 +23,8 @@ router.get('/:id', isAuth, tweetController.getTweet);
 // POST /tweets/:id
 router.post('/', isAuth, postValidator, tweetController.createTweet);
 // PUT /tweets/:id
-router.put('/:id', isAuth, isWriter, putValidator, tweetController.updateTweet);
+router.put('/:id', isAuth, putValidator, tweetController.updateTweet);
 // DELETE /tweets/:id
-router.delete('/:id', isAuth, isWriter, tweetController.deleteTweet);
+router.delete('/:id', isAuth, tweetController.deleteTweet);
 
 export default router;

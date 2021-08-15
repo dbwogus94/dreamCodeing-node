@@ -40,16 +40,32 @@ const createTweet = async (req, res) => {
 };
 // Update Tweet
 const updateTweet = async (req, res) => {
-  const resJson = await tweetService.updateTweet(req.params.id, req.body.text);
-  return resJson //
-    ? res.status(201).json(resJson)
-    : res.status(404).json({ message: `Tweet id(${req.params.id}) not found` });
+  const id = req.params.id;
+  const text = req.body.text;
+  const tweet = await tweetService.getTweetById(id);
+  if (!tweet) {
+    return res.status(404).json({ message: `Tweet id(${req.params.id}) not found` });
+  }
+  /* Authorization(인가) 코드 : 작성자가 아니라면 수정 불가*/
+  if (tweet.userId !== req.id) {
+    return res.sendStatus(403); // 권한 없음
+  }
+  const updated = await tweetService.updateTweet(id, text);
+  return res.status(201).json(updated);
 };
 // Delete Tweet
 const deleteTweet = async (req, res) => {
-  return (await tweetService.deleteTweet(req.params.id)) //
-    ? res.sendStatus(204)
-    : res.status(404).json({ message: `Tweet id(${req.params.id}) not found` });
+  const id = req.params.id;
+  const tweet = await tweetService.getTweetById(id);
+  if (!tweet) {
+    return res.status(404).json({ message: `Tweet id(${id}) not found` });
+  }
+  /* Authorization(인가) 코드 : 작성자가 아니라면 삭제 불가 */
+  if (tweet.userId !== req.id) {
+    return res.sendStatus(403); // 권한 없음
+  }
+  await tweetService.deleteTweet(req.params.id);
+  return res.sendStatus(204);
 };
 
 export { getTweets, getTweet, createTweet, updateTweet, deleteTweet };
