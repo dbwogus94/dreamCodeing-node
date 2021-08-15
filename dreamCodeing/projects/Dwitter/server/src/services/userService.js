@@ -1,12 +1,19 @@
 import * as userRepository from '../data/userRepository.js';
 /**
- * user Array
+ * ### 수정
+ * - 기존 :
+ *  userService에는 비즈니스와 관련없는 데이터 관련 로직이 들어있어 분리하였음.
+ * - 변경 :
+ *  데이터 관련 로직은 userRepository로 이동함.
+ */
+
+/**
+ * get All Users
  * @returns user Array
  * - Array : user Array
  */
 export const getUsers = async () => {
-  // 파일을 읽어온다.
-  return await userRepository.readUsers();
+  return await userRepository.findUsers();
 };
 
 /**
@@ -14,42 +21,38 @@ export const getUsers = async () => {
  * @param {string} username
  * @returns
  * - user
- * - undefined
+ * - null
  */
 export const findByUsername = async username => {
-  const users = await getUsers();
-  return users.find(user => user.username === username);
-  // find : 찾는 값이 없으면 undefined
+  return await userRepository.findByUsername(username);
 };
 
 /**
  * create user
- * @param {object} user
+ * @param {object} user { username, password, name, email, url }
  * @returns boolean
  * - true : 저장 성공
  * - false : 저장 실패
  */
 export const createUser = async user => {
-  // 유저저장소에 유저 추가
-  const users = await getUsers();
-  // id를 부여한다.
-  users.push({ id: Date.now().toString(), ...user });
-  // DB에 저장
-  await userRepository.writeUsers(users);
-  // 성공확인을 위해 추가된 유저를 다시 조회
-  return (await findByUsername(user.username)) //
-    ? true
-    : false;
+  // 신규 유저 생성
+  const result = await userRepository.createUser(user);
+  // 실패시
+  if (!result) {
+    throw new Error('[insert] 유저 생성 실패');
+    // rollback()
+  }
+  // 성공시
+  return true;
 };
 
 /**
  * 유저의 id로 조회
- * @param {string} id
+ * @param {string} user.id
  * @returns
  * - user
- * - undefined
+ * - null
  */
 export const findById = async id => {
-  const users = await getUsers();
-  return users.find(user => user.id === id);
+  return await userRepository.findById(id);
 };

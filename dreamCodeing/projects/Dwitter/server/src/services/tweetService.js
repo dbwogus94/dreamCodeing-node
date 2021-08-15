@@ -1,91 +1,61 @@
 import * as tweetRepository from '../data/tweetRepository.js';
-import * as userService from '../services/userService.js';
 /**
  * model 계층
  * - service 계층 또는 data 계층이라고 한다.
  * - 리소스를 조회, 조작, 가공하는 계층이다.
  * - spring의 경우 Model 계층을 service와 DAO 계층으로 나누어서 사용하였다.
+ *
+ * ### 수정
+ * - 기존 :
+ *  tweetService에는 비즈니스와 관련없는 데이터 관련 로직이 들어있어 분리하였음.
+ * - 변경 :
+ *  데이터 관련 로직은 tweetRepository로 이동함.
  */
 
 /**
- * get Original Tweets
- * @returns
- */
-const getOriginalTweets = async () => {
-  return await tweetRepository.readTweets();
-};
-
-/**
- * tweet Array
+ * get All tweets
  * @returns tweet Array
  * - Array : tweet Array
  */
-export const getAllTweets = async () => {
-  // 1) DB에서 읽어온다.
-  const tweets = await getOriginalTweets();
-  const users = await userService.getUsers();
-
-  // 2) tweets에 있는 userId를 통해 {...tweet, ...user} 형태의 데이터를 만든다.
-  const result = [];
-  tweets.forEach(tweet => {
-    const { username, name, url } = users.find(user => user.id === tweet.userId);
-    result.push({ ...tweet, username, name, url });
-  });
-
-  return result;
+export const getTweets = async () => {
+  return await tweetRepository.findTweets();
 };
 /**
- * select username
+ * get tweets by username
  * @param {string} username
  * @returns tweet Array
  * - Array : tweet Array
- * - false : 일치하는 작성자가 없는 경우
  */
 export const getUserTweets = async username => {
-  const tweets = await getAllTweets();
-  const findList = tweets.filter(tweet => {
-    return tweet.username === username;
-  });
-  return findList.length //
-    ? findList
-    : false;
+  return await tweetRepository.findTweetsByUser(username);
 };
 /**
- * get Tweet
+ * get Tweet by id
  * @param {string} id
  * @returns tweet
  * - tweet : 찾은 자원
  * - null : 자원이 없는 경우
  */
-export const getTweet = async id => {
-  const tweets = await getOriginalTweets();
-  // id와 일치하는 트윗 가져오기
-  const found = tweets.find(tweet => tweet.id === id);
-  if (!found) {
-    return null;
-  }
-  const { username, name, url } = await userService.findById(found.userId);
-  return { ...found, username, name, url };
+export const getTweetById = async id => {
+  return await tweetRepository.findTweetById(id);
 };
 /**
  * Create Tweet
  * @param {string} text
  * @param {string} userId
  * @returns new tweet
+ * @throws insert tweet fail
  */
 export const createTweet = async (text, userId) => {
-  // 1) 신규 트윗 생성
-  const newTweet = {
-    id: Date.now().toString(),
-    createdAt: new Date(Date.now()),
-    text,
-    userId,
-  };
-  // 2) 작성: 신규 tweet을 추가한 tweets을 파일에 새로 작성
-  const tweets = await getOriginalTweets();
-  await tweetRepository.writeTweets([newTweet, ...tweets]);
-  // 3) 조회: 방금 추가한 tweet 찾아서 리턴한다.
-  return await getTweet(newTweet.id);
+  // 신규 트윗 생성
+  const result = await tweetRepository.createTweet(text, userId);
+  // 실패시
+  if (!result) {
+    throw new Error('[insert] 트윗 생성 실패');
+    // rollback()
+  }
+  // 성공시 : 방금 추가한 tweet 찾아서 리턴한다.
+  return await tweetRepository.findTweetById(result);
 };
 /**
  * Update Tweet
@@ -94,38 +64,39 @@ export const createTweet = async (text, userId) => {
  * @returns update tweet
  *  - tweet : 수정된 tweet
  *  - null : 자원이 없는 경우
+ * @throws update tweet fail
  */
 export const updateTweet = async (id, text) => {
-  // 1) 수정할 tweet 찾기
-  const tweets = await getOriginalTweets();
-  const found = tweets.find(tweet => tweet.id === id);
-  if (!found) {
+  // 수정 내용 DB파일에 적용
+  const result = await tweetRepository.updateTweet(id, text);
+  if (result === null) {
     return null;
   }
-  // 2) tweet 수정
-  found.text = text;
-  // 3) 수정 내용 DB파일에 적용
-  await tweetRepository.writeTweets(tweets);
-  // 4) 수정한 tweet을 리턴
-  return await getTweet(id);
+  // 실패시
+  if (!result) {
+    throw new Error('[update] 트윗 수정 실패');
+    // rollback()
+  }
+  // 성공시: 수정한 tweet을 리턴
+  return await tweetRepository.findTweetById(id);
 };
 /**
  * Delete Tweet
  * @param {steing} id
  * @returns boolean
- * - true : 자원을 성공적으로 삭제 한 경우
  * - null : 자원이 없는 경우
+ * - true : 자원을 성공적으로 삭제 한 경우
+ * @throws delete tweet fail
  */
 export const deleteTweet = async id => {
-  // 1) 삭제할 tweet 찾기
-  const tweets = await getOriginalTweets();
-  const findIndex = tweets.findIndex(tweet => tweet.id === id);
-  if (findIndex === -1) {
+  const result = await tweetRepository.deleteTweet(id);
+  if (result === null) {
     return null;
   }
-  // 2) tweet 제거
-  tweets.splice(findIndex, 1);
-  // 삭제 DB파일에 반영
-  await tweetRepository.writeTweets(tweets);
-  return true;
+  // 실패시
+  if (!result) {
+    throw new Error('[delete] 트윗 삭제 실패');
+  }
+  // 성공시
+  return result;
 };

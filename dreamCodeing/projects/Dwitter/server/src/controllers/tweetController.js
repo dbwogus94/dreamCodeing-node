@@ -21,7 +21,7 @@ const getTweets = async (req, res) => {
   const username = req.query.username;
   const data = username //
     ? await tweetService.getUserTweets(username)
-    : await tweetService.getAllTweets();
+    : await tweetService.getTweets();
 
   return data //
     ? res.status(200).json(data)
@@ -29,7 +29,7 @@ const getTweets = async (req, res) => {
 };
 // Select Tweet
 const getTweet = async (req, res) => {
-  const resJson = await tweetService.getTweet(req.params.id);
+  const resJson = await tweetService.getTweetById(req.params.id);
   return resJson //
     ? res.status(200).json(resJson)
     : res.sendStatus(404);
