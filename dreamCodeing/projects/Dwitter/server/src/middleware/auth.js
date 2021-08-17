@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import * as userService from '../services/userService.js';
-import * as tweetService from '../services/tweetService.js';
+import { config } from '../config/config.js';
 
 const AUTH_ERROR = { message: 'Authentication Error' };
 /**
@@ -24,7 +24,7 @@ export const isAuth = async (req, res, next) => {
   }
   // 2. jwt가 있다면 유효한지 확인
   const token = authHeader.split(' ')[1];
-  jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+  jwt.verify(token, config.jwt.secreKey, async (err, decoded) => {
     // 유효하지 않다면?
     if (err) {
       return res.status(401).json(AUTH_ERROR);

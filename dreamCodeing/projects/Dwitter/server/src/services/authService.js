@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'; // jwt
 import bcrypt from 'bcrypt'; // 비밀번호 암호화
 import * as userService from '../services/userService.js';
-import { ObjUtil } from '../util/util.js';
+import { config } from '../config/config.js';
 
 /**
  * Sign Up
@@ -19,7 +19,7 @@ export const signUp = async user => {
     return false; // 중복된 name
   }
   // 2) 비밀번호 암호화 실행
-  const hashed = await bcrypt.hash(password, Number(process.env.BCRYPT_ROUND));
+  const hashed = await bcrypt.hash(password, config.bcrypt.saltRounds);
 
   // 3) DB에 추가
   return await userService.createUser({
@@ -51,15 +51,15 @@ export const login = async (username, password) => {
   const result = await bcrypt.compare(password, user.password);
 
   const JWTOptions = {
-    expiresIn: process.env.JWT_EXPIRESIN, // 만료시간
-    issuer: process.env.JWT_ISSUER, // 발행인
-    subject: process.env.JWT_SUHJECT, // 내용
+    expiresIn: config.jwt.expiresIn, // 만료시간
+    issuer: config.jwt.issuer, // 발행인
+    subject: config.jwt.subject, // 내용
   };
   // 3) jwt 생성
   return result //
     ? jwt.sign(
         { id: user.id }, // payload
-        process.env.JWT_SECRET, // 비밀키
+        config.jwt.secreKey, // 비밀키
         JWTOptions // jwt 옵션
       )
     : false;

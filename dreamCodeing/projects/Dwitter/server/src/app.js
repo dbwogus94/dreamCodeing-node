@@ -3,17 +3,14 @@ import cors from 'cors'; // cors 헤더 설정
 import morgan from 'morgan'; // 모니터링 로거
 import helmet from 'helmet'; // 공통 보안 헤더 설정
 import cookieParser from 'cookie-parser';
-
-// 모든 라우터 마다 선언해야한다.
-import 'express-async-errors'; // 비동기 에러를 미들웨어가 잡을 수 있도록 처리
-
-// dotenv를 사용한 환경설정
-import '../src/config/env.js';
-
+// 비동기 에러를 미들웨어가 잡을 수 있도록 처리, 모든 라우터 마다 선언해야한다.
+import 'express-async-errors';
 // 라우터
 import indexRouter from './routes/indexRouter.js';
 import tweetRouter from './routes/tweetRouter.js';
 import authRouter from './routes/authRouter.js';
+// 설정값을 가진 객체 호출
+import { config } from './config/config.js';
 
 const app = express();
 
@@ -41,4 +38,4 @@ app.use((req, res, next) => {
   res.sendStatus(404);
 });
 
-app.listen(process.env.PORT);
+app.listen(config.host.port);
