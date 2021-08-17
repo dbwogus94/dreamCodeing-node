@@ -1,28 +1,27 @@
 import jwt, { decode } from 'jsonwebtoken';
 import * as userRepository from '../data/auth.js';
-
-// TODO: Make it secure!
-const jwtSecretKey = 'Tmkiqod&nGrmn7MS#udJmOlZSv8aZ&K8';
-const AUTH_ERROR = { message: 'Authentication Error' };
+// 설정 정보를 가진 객체
+import { config } from '../config.js';
 
 /* Authorization 헤더란?
-   client에서 서버로 인증 정보를 보낼때 사용하는 정식 헤더이다.
+client에서 서버로 인증 정보를 보낼때 사용하는 정식 헤더이다.
 
-   Bearer란?
-   Authorization 헤더를 사용하여 인증정보를 요청할 때는 type이 필수로 들어가야한다.
-   Bearer는 이때 사용되는 type중 하나이다.
+Bearer란?
+Authorization 헤더를 사용하여 인증정보를 요청할 때는 type이 필수로 들어가야한다.
+Bearer는 이때 사용되는 type중 하나이다.
 
-   - Basic : base64로 인코딩된 자격 증명.
-   - Bearer : 토큰으로된 인증정보에 사용
-   - HOBA : 디지털 서명 기반 인증정보에 사용
+- Basic : base64로 인코딩된 자격 증명.
+- Bearer : 토큰으로된 인증정보에 사용
+- HOBA : 디지털 서명 기반 인증정보에 사용
 
-   ex) 
-   requset Headers = { 
-     authorization: 'Bearer ${HEADER.PAYLODE.SIGNATURE}', 
-     ... 
-   }
- */
+ex) 
+requset Headers = { 
+  authorization: 'Bearer ${HEADER.PAYLODE.SIGNATURE}', 
+  ... 
+}
+*/
 
+const AUTH_ERROR = { message: 'Authentication Error' };
 /**
  * Auth가 유효한지 확인하는 미들웨어
  * @param {*} req
@@ -44,7 +43,7 @@ export const isAuth = async (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   // 2) 비밀키를 가지고 토큰을 디코딩(복호화)한다.
-  jwt.verify(token, jwtSecretKey, async (err, decoded) => {
+  jwt.verify(token, config.jwt.secreKey, async (err, decoded) => {
     // 디코딩을 할 수 없는 경우 -> 401
     if (err) {
       return res.status(401).json(AUTH_ERROR);

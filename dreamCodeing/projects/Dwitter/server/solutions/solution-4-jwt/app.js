@@ -3,11 +3,12 @@
  */
 import express from 'express';
 import 'express-async-errors'; // 비동기 예외 처리
-
 import cors from 'cors'; // cors 헤더 설정
 import morgan from 'morgan'; // 편의성 로거
 import helmet from 'helmet'; // 보안 공통 헤더 설정
-
+/* 설정 정보를 가진 객체 */
+import { config } from './config.js';
+/* 라우터 */
 import tweetsRouter from './router/tweets.js';
 import authRouter from './router/auth.js';
 
@@ -30,4 +31,4 @@ app.use((err, req, res, next) => {
   res.sendStatus(500);
 });
 
-app.listen(8080);
+app.listen(config.host.port);
