@@ -11,6 +11,8 @@ import { config } from './config.js';
 /* 라우터 */
 import tweetsRouter from './router/tweets.js';
 import authRouter from './router/auth.js';
+/* 소켓 */
+import { initSocket } from './connection/socket.js';
 
 const app = express();
 
@@ -31,4 +33,7 @@ app.use((err, req, res, next) => {
   res.sendStatus(500);
 });
 
-app.listen(config.host.port);
+const server = app.listen(config.host.port);
+
+// socket.io를 구현한 class Socket 인스턴스화
+initSocket(server);

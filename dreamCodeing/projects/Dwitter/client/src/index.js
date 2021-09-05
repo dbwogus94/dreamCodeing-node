@@ -7,11 +7,14 @@ import TweetService from './service/tweet';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AuthErrorEventBus } from './context/AuthContext';
+/* 소켓 */
+import socket, { io } from 'socket.io-client';
 
 /* ### 의존성 관리 */
 // 1) HttpClient, TokenStorage 클래스 추가
 import HttpClient from './network/http';
 import TokenStorage from './db/token';
+import { message } from 'statuses';
 
 // authErrorEventBus.notify()가 호출되면 로그인 페이지로 이동된다.
 // HttpClient에서 401(인증 실패)코드가 응답되면 authErrorEventBus.notify()를 호출한다.
@@ -23,6 +26,19 @@ const tokenStorage = new TokenStorage();
 // 3) 생성자에 인자로 전달(의존성 주입)
 const tweetService = new TweetService(httpClient, tokenStorage);
 const authService = new AuthService(httpClient, tokenStorage);
+
+/* 소켓 생성 */
+const socketIO = socket(baseURL, { transports: ['websocket'] }); // {transports: ['websocket'] }
+
+// 에러 처리
+socketIO.on('connect_error', error => {
+  console.log('socket error', error);
+});
+
+// dwitter로 연결된 소켓 응답
+socketIO.on('dwitter', msg => {
+  console.log(msg);
+});
 
 ReactDOM.render(
   <React.StrictMode>
