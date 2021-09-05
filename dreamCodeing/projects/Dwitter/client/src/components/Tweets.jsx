@@ -16,9 +16,17 @@ const Tweets = memo(({ tweetService, username, addable }) => {
       .getTweets(username)
       .then(tweets => setTweets([...tweets]))
       .catch(onError);
+
+    // 소켓 이벤트를 통해 새로운 트윗 추가
+    // tweetService.onSync메서드에 정의된 소켓 이벤트 발생시 onCreated()를 호출한다.
+    const stopSync = tweetService.onSync(tweet => onCreated(tweet));
+
+    // 컴포넌트가 종료되면 위에서 사용된 소켓 이벤트 제거
+    return () => stopSync();
   }, [tweetService, username, user]);
 
   const onCreated = tweet => {
+    // 기존 트윗 목록의 가장 앞에 새로운 트윗을 추가한다.
     setTweets(tweets => [tweet, ...tweets]);
   };
 
@@ -45,7 +53,7 @@ const Tweets = memo(({ tweetService, username, addable }) => {
 
   return (
     <>
-      {addable && <NewTweetForm tweetService={tweetService} onError={onError} onCreated={onCreated} />}
+      {addable && <NewTweetForm tweetService={tweetService} onError={onError} /> /* onCreated={onCreated} 제거 */}
       {error && <Banner text={error} isAlert={true} transient={true} />}
       {tweets.length === 0 && <p className="tweets-empty">No Tweets Yet</p>}
       <ul className="tweets">

@@ -7,38 +7,28 @@ import TweetService from './service/tweet';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AuthErrorEventBus } from './context/AuthContext';
-/* 소켓 */
-import socket, { io } from 'socket.io-client';
 
-/* ### 의존성 관리 */
-// 1) HttpClient, TokenStorage 클래스 추가
-import HttpClient from './network/http';
 import TokenStorage from './db/token';
-import { message } from 'statuses';
+import HttpClient from './network/http';
+import Socket from './network/socket.js'; // 소켓
 
-// authErrorEventBus.notify()가 호출되면 로그인 페이지로 이동된다.
-// HttpClient에서 401(인증 실패)코드가 응답되면 authErrorEventBus.notify()를 호출한다.
-const authErrorEventBus = new AuthErrorEventBus();
-// 2) HttpClient, TokenStorage 인스턴스화
 const baseURL = process.env.REACT_APP_BASE_URL;
-const httpClient = new HttpClient(baseURL, authErrorEventBus);
 const tokenStorage = new TokenStorage();
-// 3) 생성자에 인자로 전달(의존성 주입)
-const tweetService = new TweetService(httpClient, tokenStorage);
-const authService = new AuthService(httpClient, tokenStorage);
+/* socket.io를 구현한 클래스  */
+const socketClient = new Socket(baseURL, () => tokenStorage.getToken());
 
-/* 소켓 생성 */
-const socketIO = socket(baseURL, { transports: ['websocket'] }); // {transports: ['websocket'] }
+/* ### authErrorEventBus 
+authErrorEventBus.notify()가 호출되면 로그인 페이지로 이동된다.
+HttpClient에서 401(인증 실패)코드가 응답되면 authErrorEventBus.notify()를 호출한다.*/
+const authErrorEventBus = new AuthErrorEventBus();
+const httpClient = new HttpClient(baseURL, authErrorEventBus);
+const authService = new AuthService(httpClient, tokenStorage, socketClient);
 
-// 에러 처리
-socketIO.on('connect_error', error => {
-  console.log('socket error', error);
-});
-
-// dwitter로 연결된 소켓 응답
-socketIO.on('dwitter', msg => {
-  console.log(msg);
-});
+// **tip:
+// 위 처럼 인자를 콜백으로 감싸서 전달하면 tokenStorage의 선언 순서와 상관없이 사용이 가능하다.
+// 콜백으로 전달된 함수는 비동기로 실행되기 때문이다.
+// -> tokenStorage.getToken()의 결과가 익명함수 콜백으로 매핑된다.
+const tweetService = new TweetService(httpClient, tokenStorage, socketClient);
 
 ReactDOM.render(
   <React.StrictMode>

@@ -4,9 +4,10 @@ export default class AuthService {
    * @param {*} http - HttpClient
    * @param {*} tokenStorage - TokenStorage
    */
-  constructor(http, tokenStorage) {
+  constructor(http, tokenStorage, socket) {
     this.http = http;
     this.tokenStorage = tokenStorage;
+    this.socket = socket;
   }
 
   async signup(username, password, name, email, url) {
@@ -42,9 +43,14 @@ export default class AuthService {
     // Bearer는 인증 정보가 토큰형태임을 알리는 type 접두사
   }
 
-  // 로그아웃 : 클라이언트에서 토큰을 삭제한다.
+  // 로그아웃
   async logout() {
+    // 토큰 제거
+    // -> HTTP 프로토콜은 무상태이다. 때문에 로그아웃은 token만 제거하면 된다.
     this.tokenStorage.clearToken();
+    // 연결된 소켓 닫기
+    // -> ws 프로토콜은 상태가 있다. 때문에 연결을 끊는다는 이벤트를 호출하여 서버에게 알린다.
+    this.socket.disconnect();
     return;
   }
 }
