@@ -1,4 +1,5 @@
 import * as tweetService from '../services/tweetService.js';
+import { getSocketIO } from '../connection/socket.js';
 
 /**
  * ### Controller
@@ -36,7 +37,11 @@ const getTweet = async (req, res) => {
 };
 // Create Tweet
 const createTweet = async (req, res) => {
-  return res.status(201).json(await tweetService.createTweet(req.body.text, req.id));
+  // 신규 트윗 생성
+  const newTweet = await tweetService.createTweet(req.body.text, req.id);
+  // 신규 트윗 소켓으로 전파
+  getSocketIO().emit('tweets', newTweet);
+  return res.status(201).json(newTweet);
 };
 // Update Tweet
 const updateTweet = async (req, res) => {

@@ -1,4 +1,8 @@
+// 날짜에 대한 포멧을 지원하는 모듈
+import moment from 'moment';
 import express from 'express';
+
+// app에 적용되는 공통 모듈
 import cors from 'cors'; // cors 헤더 설정
 import morgan from 'morgan'; // 모니터링 로거
 import helmet from 'helmet'; // 공통 보안 헤더 설정
@@ -11,6 +15,8 @@ import tweetRouter from './routes/tweetRouter.js';
 import authRouter from './routes/authRouter.js';
 // 설정값을 가진 객체 호출
 import { config } from './config/config.js';
+// 소켓
+import { initSocket } from './connection/socket.js';
 
 const app = express();
 
@@ -38,4 +44,10 @@ app.use((req, res, next) => {
   res.sendStatus(404);
 });
 
-app.listen(config.host.port);
+const server = app.listen(config.host.port, () => {
+  const koreaDate = moment().format('yyyy-MM-DD HH:mm:ss');
+  console.log(`[${koreaDate}] listen on Server, port is ${config.host.port}`);
+});
+
+// 웹 소켓 생성
+initSocket(server);
