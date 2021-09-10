@@ -21,116 +21,89 @@
  * - getById()
  * - create()
  * - update()
+ *
+ * ### solution-6-db
+ * - 모든 tweet 메서드 db에서 조회하도록 변경
  */
 
-import * as userRepository from '../data/auth.js';
+import { db } from '../db/database.js'; // MySQL DB connection pool을 가진 모듈
 
-let tweets = [
-  {
-    id: '1',
-    text: '솔루션 코드는 재밌습니다.',
-    createAt: new Date().toString(),
-    userId: '1', // userId를 통해 유저의 정보에 접근
-  },
-  {
-    id: '2',
-    text: 'Hi~',
-    createAt: new Date().toString(),
-    userId: '1',
-  },
-];
+const SELECT_JOIN = `
+        SELECT 
+          tw.id, tw.text, tw.createdAt, tw.userId, us.username, us.name, us.email, us.url
+        FROM tweets tw JOIN users us
+        ON tw.userId = us.id `;
+
+const ORDER_DESC = ' ORDER BY tw.createdAt DESC ';
 
 /**
  * 유저의 정보를 담은 전체 tweet을 가져온다.
  * @returns
- * tweets = [
- *  { tweet, usernaem, name, url },
- *   ...
- * ]
+ * tweets = [tweet + user, ...]
  */
 export async function getAll() {
-  return Promise.all(
-    tweets.map(async tweet => {
-      const { username, name, url } = await userRepository.findById(tweet.userId);
-      return { ...tweet, username, name, url };
-      // async를 사용했기 때문에 promise를 리턴한다.
-      // 그렇기 때문에 Promise.all의 인자로 사용이 가능하다.
-    })
-  );
+  return db
+    .execute(`${SELECT_JOIN} ${ORDER_DESC}`) // 최신 기준으로 정렬
+    .then(result => result[0]);
 }
 /**
  * username(작성자)와 일치하는 모든 tweet 조회
  * @param {string} username
  * @returns
- * tweets = [
- *  { tweet, usernaem, name, url },
- *   ...
- * ]
+ * tweets = [tweet + user, ...]
  */
 export async function getAllByUsername(username) {
-  // username는 userRepository에서 가지고 있다. 그렇기 때문에 getAll 호출
-  const tweets = await getAll();
-  return tweets.filter(tweet => tweet.username === username);
+  return db
+    .execute(`${SELECT_JOIN} WHERE us.username = ? ${ORDER_DESC}`, [username]) // 최신 기준으로 정렬
+    .then(result => result[0]);
 }
 /**
  * tweet의 id와 일치하는 tweet 조회
  * @param {string} id
  * @returns
- * tweet = { tweet, username, name, url }
+ * tweet
  */
 export async function getById(id) {
-  // 1) tweets에서 인자로 받은 id와 일치하는 tweet 찾기
-  const found = tweets.find(tweet => tweet.id === id); // 없으면 undefined
-  if (!found) {
-    return null;
-  }
-  // 2) 찾은 tweet에서 userId를 통해 유저의 정보를 찾기
-  const { username, name, url } = await userRepository.findById(found.userId);
-  // 3) 찾은 tweet과 user의 정보를 합하여 리턴한다.
-  return { ...found, username, name, url };
+  return db
+    .execute(`${SELECT_JOIN} WHERE tw.id = ?`, [id]) //
+    .then(result => result[0][0]);
 }
 /**
  * 신규 tweet 생성
  * @param {string} text
  * @param {string} userId
  * @returns
- * tweet = {tweet, username, name, url}
+ * tweet + user
  */
 export async function create(text, userId) {
-  // 1) 트윗 생성
-  const tweet = {
-    id: Date.now().toString(),
-    text,
-    createAt: new Date().toString(),
-    userId,
-  };
-  // 2) 기존 tweets 가장 앞에 신규 트윗 추가
-  tweets = [tweet, ...tweets];
-  // 3) user정보가 포함된 tweet을 리턴한다.
-  return getById(tweet.id);
+  return db
+    .execute('INSERT INTO tweets(text, createdAt, userId) VALUES(?, NOW(), ?)', [text, userId]) //
+    .then(result => getById(result[0].insertId));
+  // insertId: insert되 row PK
+  // 리턴받은 insertId를 사용하여 조회
 }
 /**
  * tweet의 id와 일치하는 tweet 수정
  * @param {string} id
  * @param {string} text
  * @returns
- * tweet = {tweet, username, name, url}
+ * tweet + user
  */
 export async function update(id, text) {
-  // 1) 일치하는 트윗 찾기
-  const tweet = tweets.find(tweet => tweet.id === id);
-  if (!tweet) {
-    return null;
-  }
-  // 2) tweet 수정
-  tweet.text = text;
-  // 3) user의 정보를 포함한 tweet을 리턴
-  return getById(id);
+  return db
+    .execute('UPDATE tweets SET text = ? WHERE id = ?', [text, id]) //
+    .then(result => {
+      return getById(id);
+    }); // 수정 결과 조회
 }
 /**
  * tweet의 id와 일치하는 트윗 삭제
  * @param {string} id
  */
 export async function remove(id) {
-  tweets = tweets.filter(tweet => tweet.id !== id);
+  return db
+    .execute('DELETE FROM tweets WHERE id = ?', [id]) //
+    .then(result => console.log(result[0].affectedRows));
+  // result[0].affectedRows : 삭제 요청 결과를 가지고 있음,
+  // ex) 1개 삭제 쿼리에서 성공이면 1, 10개 요청중 9개 성공이면 9를 가진다.
 }

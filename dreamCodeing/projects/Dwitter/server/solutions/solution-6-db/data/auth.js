@@ -1,33 +1,38 @@
-export const users = [
-  {
-    id: '1', // DB에서 id를 부여한다.
-    username: 'bob',
-    password: '$2b$12$mhnJ92tY/OyL0C63tEkrcuU9REMXU5t0FloNQFc1m0R3wl2nLI9DW', // 12345
-    name: 'Bob',
-    email: 'bob@gmail.com',
-    url: '',
-  },
-  {
-    id: '2', // DB에서 id를 부여한다.
-    username: 'jay',
-    password: '$2b$12$mhnJ92tY/OyL0C63tEkrcuU9REMXU5t0FloNQFc1m0R3wl2nLI9DW', // 12345
-    name: 'Jay',
-    email: 'jay@gmail.com',
-    url: '',
-  },
-];
+import { db } from '../db/database.js';
 
 export async function findByUsername(username) {
-  return users.find(user => user.username === username);
-  // 없으면 undefined
-}
-export async function createUser(user) {
-  const created = { ...user, id: Date.now().toString() };
-  users.push(created);
-  return created.id;
+  return db
+    .execute(
+      ` SELECT
+          id, username, password, name, email, url
+        FROM users
+        WHERE username = ?`,
+      [username]
+    )
+    .then(result => result[0][0]);
 }
 
 export async function findById(id) {
-  return users.find(user => user.id === id);
-  // 없으면 undefined
+  return db
+    .execute(
+      ` SELECT
+          id, username, password, name, email, url
+        FROM users
+        WHERE id = ?`,
+      [id]
+    )
+    .then(result => result[0][0]);
+}
+
+// 유저 생성
+export async function createUser(user) {
+  const { username, password, name, email, url } = user;
+  return db
+    .execute(
+      `INSERT INTO
+        users (username, password, name, email, url)
+        VALUES (?, ?, ?, ?, ?)`,
+      [username, password, name, email, url]
+    )
+    .then(result => result[0].insertId); // insertId:  insert 성공시 AUTO_INCREMENT로 생성된 id를 리턴한다.
 }

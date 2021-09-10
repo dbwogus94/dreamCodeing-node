@@ -35,7 +35,7 @@ app.use((err, req, res, next) => {
 });
 
 // db 연결 확인
-db.getConnection().then(connection => console.log(connection));
+//db.getConnection().then(connection => console.log(connection));
 
 // express 서버 리스닝
 const server = app.listen(config.host.port);
