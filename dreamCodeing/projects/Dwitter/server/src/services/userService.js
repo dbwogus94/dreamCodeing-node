@@ -2,19 +2,10 @@ import * as userRepository from '../data/userRepository.js';
 /**
  * ### 수정
  * - 기존 :
- *  userService에는 비즈니스와 관련없는 데이터 관련 로직이 들어있어 분리하였음.
+ *  userService에는 비즈니스와 관련없는 데이터 관련 로직이 들어있어 분리하on.release();였음.
  * - 변경 :
  *  데이터 관련 로직은 userRepository로 이동함.
  */
-
-/**
- * get All Users
- * @returns user Array
- * - Array : user Array
- */
-export const getUsers = async () => {
-  return await userRepository.findUsers();
-};
 
 /**
  * select by username
@@ -37,13 +28,7 @@ export const findByUsername = async username => {
 export const createUser = async user => {
   // 신규 유저 생성
   const result = await userRepository.createUser(user);
-  // 실패시
-  if (!result) {
-    throw new Error('[insert] 유저 생성 실패');
-    // rollback()
-  }
-  // 성공시
-  return true;
+  return result;
 };
 
 /**

@@ -1,30 +1,16 @@
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { readFile, writeFile } from '../util/fileUtil.js';
+import { pool } from '../db/database.js';
 
-// es6의 module을 사용하면 __dirname, __filename를 아래처럼 사용해야 한다.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const TARGET = 'database/users.json';
-const file = path.join(__dirname, TARGET);
-
-export const readUsers = async () => {
-  return await readFile(file);
-};
-
-export const writeUsers = async users => {
-  return await writeFile(file, users);
-};
+// SQL
+const SQL_USER = 'SELECT id, username, password, name, email, url FROM users ';
 
 /**
- * ### Select users
- * - ex) SQL : select * from user;
- * @returns users
+ * ### Get Connection
+ * - conncetion 생성 || pool에서 connection 가져오기
+ * @returns connection
  */
-export const findUsers = async () => {
-  return await readUsers();
-};
+async function getConnection() {
+  return await pool.getConnection(async conn => conn);
+}
 
 /**
  * ### Select user by username
@@ -34,9 +20,10 @@ export const findUsers = async () => {
  * - null : 자원없음
  */
 export const findByUsername = async username => {
-  const users = await findUsers();
-  const result = users.find(user => user.username === username);
-  return result ? result : null;
+  const sql = SQL_USER + ' WHERE username = ?';
+  const con = await getConnection();
+  const [row] = await con.execute(sql, [username]);
+  return row[0] !== undefined ? row[0] : null; // 명시적으로 null 처리
 };
 
 /**
@@ -49,12 +36,34 @@ export const findByUsername = async username => {
  * @return boolean - 성공 실패 여부
  */
 export const createUser = async user => {
-  const newUser = { id: Date.now().toString(), ...user };
-  const users = await findUsers();
-  users.push(newUser);
-  await writeUsers(users);
-  return !!1;
-  // TODO: DB추가시 응답 코드리턴 ex) 성공시 1, 실패 0
+  const { username, password, name, email, url } = user;
+  const sql = `
+    INSERT INTO 
+      users(username, password, name, email, url) 
+      VALUES(?, ?, ?, ?, ?)`;
+
+  // 1) connection 가져오기
+  const con = await getConnection();
+  // 2) 트랜잭션 시작
+  con.beginTransaction();
+
+  try {
+    // 3) SQL 요청 및 응답
+    const [result] = await con.execute(sql, [username, password, name, email, url]);
+    // 4) 성공시 commit
+    con.commit();
+    return result.insertId; // 생성된 row id
+  } catch (error) {
+    // 4) sql 에러시 rollback
+    con.rollback();
+    // ** MySQL은 AUTO_INCREMENT로 올라간 id는 rollback 되지 않는다.
+    //    그렇기 때문에 이 코드에서 사실상 rollback 할 필요는 없다.
+    console.error(`[INSERT User SQL ERROR]\nsql: ${sql}\nmessage: ${error.sqlMessage}`);
+    throw new Error(error);
+  } finally {
+    // 5) connection pool에게 반납
+    con.release();
+  }
 };
 
 /**
@@ -66,9 +75,8 @@ export const createUser = async user => {
  * - null
  */
 export const findById = async id => {
-  const users = await findUsers();
-  const result = users.find(user => user.id === id);
-  return result //
-    ? result
-    : null;
+  const sql = SQL_USER + ' WHERE id = ?';
+  const con = await getConnection();
+  const [row] = await con.execute(sql, [id]);
+  return row[0] !== undefined ? row[0] : null;
 };
