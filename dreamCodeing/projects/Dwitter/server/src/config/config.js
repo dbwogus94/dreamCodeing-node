@@ -47,4 +47,10 @@ export const config = {
   host: {
     port: required('HOST_PORT', 8080),
   },
+  mysql: {
+    host: required('MYSQL_HOST', 'localhost'),
+    user: required('MYSQL_USER', 'root'),
+    database: required('MYSQL_DATABASE'),
+    password: required('MYSQL_PASSWORD'),
+  },
 };
