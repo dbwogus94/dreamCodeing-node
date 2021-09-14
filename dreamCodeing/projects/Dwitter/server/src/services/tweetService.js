@@ -20,6 +20,7 @@ import * as tweetRepository from '../data/tweetRepository.js';
 export const getTweets = async () => {
   return await tweetRepository.findTweets();
 };
+
 /**
  * get tweets by username
  * @param {string} username
@@ -29,6 +30,7 @@ export const getTweets = async () => {
 export const getUserTweets = async username => {
   return await tweetRepository.findTweetsByUser(username);
 };
+
 /**
  * get Tweet by id
  * @param {string} id
@@ -39,64 +41,40 @@ export const getUserTweets = async username => {
 export const getTweetById = async id => {
   return await tweetRepository.findTweetById(id);
 };
+
 /**
  * Create Tweet
  * @param {string} text
  * @param {string} userId
  * @returns new tweet
- * @throws insert tweet fail
+ * - 신규 생성된 tweet
  */
 export const createTweet = async (text, userId) => {
   // 신규 트윗 생성
-  const result = await tweetRepository.createTweet(text, userId);
-  // 실패시
-  if (!result) {
-    throw new Error('[insert] 트윗 생성 실패');
-    // rollback()
-  }
-  // 성공시 : 방금 추가한 tweet 찾아서 리턴한다.
-  return await getTweetById(result);
+  const insertId = await tweetRepository.createTweet(text, userId);
+  // 신규 생성된 트윗을 리턴
+  return await getTweetById(insertId);
 };
+
 /**
  * Update Tweet
  * @param {string} id
  * @param {object} body
  * @returns update tweet
  *  - tweet : 수정된 tweet
- *  - null : 자원이 없는 경우
- * @throws update tweet fail
  */
 export const updateTweet = async (id, text) => {
-  // 수정 내용 DB파일에 적용
-  const result = await tweetRepository.updateTweet(id, text);
-  if (result === null) {
-    return null;
-  }
-  // 실패시
-  if (!result) {
-    throw new Error('[update] 트윗 수정 실패');
-    // rollback()
-  }
-  // 성공시: 수정한 tweet을 리턴
+  // 트윗 수정
+  await tweetRepository.updateTweet(id, text);
+  // 수정한 tweet을 리턴
   return await getTweetById(id);
 };
+
 /**
  * Delete Tweet
  * @param {steing} id
- * @returns boolean
- * - null : 자원이 없는 경우
- * - true : 자원을 성공적으로 삭제 한 경우
- * @throws delete tweet fail
  */
 export const deleteTweet = async id => {
-  const result = await tweetRepository.deleteTweet(id);
-  if (result === null) {
-    return null;
-  }
-  // 실패시
-  if (!result) {
-    throw new Error('[delete] 트윗 삭제 실패');
-  }
-  // 성공시
-  return result;
+  // 트윗 삭제
+  await tweetRepository.deleteTweet(id);
 };

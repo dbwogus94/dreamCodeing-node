@@ -1,34 +1,24 @@
-// DB 추가시 아래 코드제거 예정 (...writeFile 까지)
-import * as userService from '../services/userService.js';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { readFile, writeFile } from '../util/fileUtil.js';
+import { pool } from '../db/database.js';
 
-// es6의 module을 사용하면 __dirname, __filename를 아래처럼 사용해야 한다.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+async function getConnection() {
+  return await pool.getConnection(async conn => conn);
+}
 
-const TARGET = 'database/tweets.json';
-const file = path.join(__dirname, TARGET);
+const USERS_JOIN_SQL = ` 
+  SELECT 
+    tw.id
+    , tw.text
+    , tw.createdAt
+    , tw.userId
+    , us.username
+    , us.name
+    , us.email
+    , us.url
+  FROM tweets tw JOIN users us
+  ON tw.userId = us.id
+  `;
 
-// DB 추가시 제거
-export const readTweets = async () => {
-  return await readFile(file);
-};
-// DB 추가시 제거
-export const writeTweets = async tweets => {
-  return await writeFile(file, tweets);
-};
-
-/**
- * ### Select Only Tweets
- * - ex) SQL
- * select * form tweet;
- * @returns tweet
- */
-const findOnlyTweets = async () => {
-  return await readTweets();
-};
+const ORDER_DESC = ' ORDER BY tw.createdAt DESC ';
 
 /**
  * ### Select Tweets
@@ -38,18 +28,11 @@ const findOnlyTweets = async () => {
  * - Array : tweet Array
  */
 export const findTweets = async () => {
-  // 1) DB에서 읽어온다.
-  const tweets = await findOnlyTweets();
-  const users = await userService.getUsers();
-
-  // 2) tweets에 있는 userId를 통해 {...tweet, ...user} 형태의 데이터를 만든다.
-  const result = [];
-  tweets.forEach(tweet => {
-    const { username, name, url } = users.find(user => user.id === tweet.userId);
-    result.push({ ...tweet, username, name, url });
-  });
-
-  return result;
+  const sql = USERS_JOIN_SQL + ORDER_DESC;
+  const con = await getConnection();
+  const [rows] = await con.execute(sql);
+  con.release(); // connection pool로 반납
+  return rows;
 };
 
 /**
@@ -65,12 +48,12 @@ export const findTweets = async () => {
  * - false : 일치하는 작성자가 없는 경우
  */
 export const findTweetsByUser = async username => {
-  const tweets = await findTweets();
-  const findList = tweets.filter(tweet => {
-    return tweet.username === username;
-  });
-  return findList.length //
-    ? findList
+  const sql = USERS_JOIN_SQL + ' WHERE us.username = ?' + ORDER_DESC;
+  const con = await getConnection();
+  const [rows] = await con.execute(sql, [username]);
+  con.release();
+  return rows.length //
+    ? rows
     : false;
 };
 
@@ -87,14 +70,11 @@ export const findTweetsByUser = async username => {
  * - null : 자원이 없는 경우
  */
 export const findTweetById = async id => {
-  const tweets = await findOnlyTweets();
-  // id와 일치하는 트윗 가져오기
-  const found = tweets.find(tweet => tweet.id === id);
-  if (!found) {
-    return null;
-  }
-  const { username, name, url } = await userService.findById(found.userId);
-  return { ...found, username, name, url };
+  const sql = USERS_JOIN_SQL + ' WHERE tw.id = ?';
+  const con = await getConnection();
+  const [rows] = await con.execute(sql, [id]);
+  con.release();
+  return rows[0] !== undefined ? rows[0] : null;
 };
 
 /**
@@ -102,26 +82,32 @@ export const findTweetById = async id => {
  * - ex) SQL :
  *  insert into
  *  tweet(text, userId)
- *  values(${newTweet.text}, ${newTweet.userId});
+ *  values(${tweet.text}, ${tweet.userId});
  * @param {string} tweet.text - 글 내용
  * @param {string} tweet.userId - 작성자 id
- * @returns newTweet.id - 생성된 tweet id
+ * @returns newTweet.id
+ * @throws mysql.QueryError
  */
 export const createTweet = async (text, userId) => {
-  // 신규 트윗
-  const newTweet = {
-    id: Date.now().toString(), // TODO: DB에서 생성
-    createdAt: new Date(Date.now()), // TODO: DB에서 생성
-    text,
-    userId,
-  };
-  // 작성: 기존 tweets에 신규 트윗을 추가한다.
-  const tweets = await findOnlyTweets();
-  await writeTweets([newTweet, ...tweets]);
-  // TODO: DB추가시 실패 코드 필요
-
-  // 성공시 생성한 트윗 id 리턴
-  return newTweet.id;
+  const sql = 'INSERT INTO tweets(text, createdAt, userId) VALUES(?, NOW(), ?)';
+  // 1) pool에서 connection 가져온다
+  const con = await getConnection();
+  // 2) 트랜잭션 시작
+  con.beginTransaction();
+  try {
+    // 3) sql 실행 및 리턴
+    const [result] = await con.execute(sql, [text, userId]);
+    // 4) 성공시 저장
+    con.commit();
+    return result.insertId; // AUTO_INCREMENT생성된 id
+  } catch (error) {
+    // 4) 실패시 롤백
+    con.rollback();
+    throw error; // error middleware가 처리하도록 에러를 throw를 한다.
+  } finally {
+    // 5) connection 반납
+    con.release();
+  }
 };
 
 /**
@@ -132,42 +118,51 @@ export const createTweet = async (text, userId) => {
  *  where id = ${tweet.id}
  * @param {string} tweet.id
  * @param {object} tweet.text
- * @returns boolean : !!성공 실패 코드
+ * @returns result.affectedRows
+ * - UPDATE sql과 일치하는 row 수
+ * @throws mysql.QueryError
  */
 export const updateTweet = async (id, text) => {
-  // 1) 수정할 tweet 찾기
-  const tweets = await findOnlyTweets();
-  const found = tweets.find(tweet => tweet.id === id);
-  if (!found) {
-    return null;
+  const sql = 'UPDATE tweets SET text = ? WHERE id = ?';
+  const con = await getConnection();
+  con.beginTransaction();
+
+  try {
+    const [result] = await con.execute(sql, [text, id]);
+    con.commit();
+    return result.affectedRows;
+    // affectedRows : update Sql의 경우 조건에 따라 찾은 row 개수이다.
+    // changedRows : update Sql의 경우 변경된 row 개수이다.
+    // -> changedRows는 수정 전후 값이 같은 경우 0을 리턴한다.
+  } catch (error) {
+    con.rollback();
+    throw error;
+  } finally {
+    con.release();
   }
-  // 2) tweet 수정
-  found.text = text;
-  // 3) 수정 내용 DB파일에 적용
-  await writeTweets(tweets);
-  return !!1;
-  // TODO: DB추가시 응답 코드리턴 ex) 성공시 1, 실패 0
 };
 
 /**
  * ### Delete Tweet
  * - ex) SQL : delete from tweet where id = ${tweet.id}
  * @param {steing} tweet.id
- * @returns boolean
- * - true : 자원을 성공적으로 삭제 한 경우
- * - null : 자원이 없는 경우
+ * @returns result.affectedRows
+ * - 삭제 성공한 row수
+ * @throws mysql.QueryError
  */
 export const deleteTweet = async id => {
-  // 1) 삭제할 tweet 찾기
-  const tweets = await findOnlyTweets();
-  const findIndex = tweets.findIndex(tweet => tweet.id === id);
-  if (findIndex === -1) {
-    return null;
+  const sql = 'DELETE FROM tweets WHERE id = ?';
+  const con = await getConnection();
+  con.beginTransaction();
+
+  try {
+    const [result] = await con.execute(sql, [id]);
+    con.commit();
+    return result.affectedRows;
+  } catch (error) {
+    con.rollback();
+    throw error;
+  } finally {
+    con.release();
   }
-  // 2) tweet 제거
-  tweets.splice(findIndex, 1);
-  // 삭제 DB파일에 반영
-  await writeTweets(tweets);
-  return !!1;
-  // TODO: DB추가시 응답 코드리턴 ex) 성공시 1, 실패 0
 };
