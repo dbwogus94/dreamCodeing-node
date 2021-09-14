@@ -22,8 +22,9 @@ async function getConnection() {
 export const findByUsername = async username => {
   const sql = SQL_USER + ' WHERE username = ?';
   const con = await getConnection();
-  const [row] = await con.execute(sql, [username]);
-  return row[0] !== undefined ? row[0] : null; // 명시적으로 null 처리
+  const [rows] = await con.execute(sql, [username]);
+  con.release();
+  return rows[0] !== undefined ? rows[0] : null; // 명시적으로 null 처리
 };
 
 /**
@@ -34,6 +35,7 @@ export const findByUsername = async username => {
  * values(${user.username}, ${user.password}, ${user.name}, ${user.email}, ${user.url});
  * @param {object} user { username, password, name, email, url }
  * @return boolean - 성공 실패 여부
+ * @throws mysql.QueryError
  */
 export const createUser = async user => {
   const { username, password, name, email, url } = user;
@@ -58,8 +60,14 @@ export const createUser = async user => {
     con.rollback();
     // ** MySQL은 AUTO_INCREMENT로 올라간 id는 rollback 되지 않는다.
     //    그렇기 때문에 이 코드에서 사실상 rollback 할 필요는 없다.
-    console.error(`[INSERT User SQL ERROR]\nsql: ${sql}\nmessage: ${error.sqlMessage}`);
-    throw new Error(error);
+    // console.error(`[INSERT User SQL ERROR]\nsql: ${sql}\nmessage: ${error.sqlMessage}`);
+
+    throw error;
+    /* 이 로직에서 throw 사용 시 고려할점 
+      1) username UNIQUE 제약조건의 경우는 에러를 던지면 안된다.
+        -> authService에서 username 중복 확인을 하기 때문에 여기서 신경쓸 필요가 없다.
+      2) 위의 경우를 제외한 오류는 500에러로 처리하기 위해 에러를 던진다.
+    */
   } finally {
     // 5) connection pool에게 반납
     con.release();
@@ -77,6 +85,7 @@ export const createUser = async user => {
 export const findById = async id => {
   const sql = SQL_USER + ' WHERE id = ?';
   const con = await getConnection();
-  const [row] = await con.execute(sql, [id]);
-  return row[0] !== undefined ? row[0] : null;
+  const [rows] = await con.execute(sql, [id]);
+  con.release();
+  return rows[0] !== undefined ? rows[0] : null;
 };
