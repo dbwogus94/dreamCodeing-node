@@ -17,10 +17,22 @@ import authRouter from './routes/authRouter.js';
 import { config } from './config/config.js';
 // 소켓
 import { initSocket } from './connection/socket.js';
+// sequelize 초기화
+import db from './models/index.js';
+const { sequelize } = db;
+
+/* model과 table 동기화(운영에서 사용 x)*/
+
+// 1) table 존재에 상관없이 무조건 create 쿼리를 내보낸다.
+//await sequelize.sync();
+// 2) table을 먼저 drop하고 create 한다.
+// await sequelize.sync({ force: true });
+// 3) model과 table를 비교하여 model에 table이 일치하도록 sql을 요청한다
+// await sequelize.sync({ alter: true });
 
 const app = express();
 
-/* 1. 미들웨어 설정 : 파서, 로가, 헤더 */
+/* 1. 미들웨어 설정 : 파서, 몰간, 헤더 */
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan('dev'));
