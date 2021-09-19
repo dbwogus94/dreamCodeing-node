@@ -8,15 +8,6 @@ import * as userRepository from '../data/userRepository.js';
  */
 
 /**
- * get All Users
- * @returns user Array
- * - Array : user Array
- */
-export const getUsers = async () => {
-  return await userRepository.findUsers();
-};
-
-/**
  * select by username
  * @param {string} username
  * @returns
@@ -31,19 +22,11 @@ export const findByUsername = async username => {
  * create user
  * @param {object} user { username, password, name, email, url }
  * @returns boolean
- * - true : 저장 성공
- * - false : 저장 실패
  */
 export const createUser = async user => {
   // 신규 유저 생성
-  const result = await userRepository.createUser(user);
-  // 실패시
-  if (!result) {
-    throw new Error('[insert] 유저 생성 실패');
-    // rollback()
-  }
-  // 성공시
-  return true;
+  const newId = await userRepository.createUser(user);
+  return !!newId;
 };
 
 /**
