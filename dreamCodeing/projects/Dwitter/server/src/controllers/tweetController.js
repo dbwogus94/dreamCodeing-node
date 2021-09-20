@@ -24,9 +24,9 @@ const getTweets = async (req, res) => {
     ? await tweetService.getUserTweets(username)
     : await tweetService.getTweets();
 
-  return data //
+  return data.length !== 0 //
     ? res.status(200).json(data)
-    : res.status(404).json({ message: `Tweet username(${username}) not found` });
+    : res.sendStatus(404);
 };
 // Select Tweet
 const getTweet = async (req, res) => {
