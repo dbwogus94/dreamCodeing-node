@@ -44,18 +44,12 @@ export const getTweetById = async id => {
  * @param {string} text
  * @param {string} userId
  * @returns new tweet
- * @throws insert tweet fail
  */
 export const createTweet = async (text, userId) => {
   // 신규 트윗 생성
-  const result = await tweetRepository.createTweet(text, userId);
-  // 실패시
-  if (!result) {
-    throw new Error('[insert] 트윗 생성 실패');
-    // rollback()
-  }
-  // 성공시 : 방금 추가한 tweet 찾아서 리턴한다.
-  return await getTweetById(result);
+  const res = await tweetRepository.createTweet(text, userId);
+  // 방금 추가한 tweet 찾아서 리턴한다.
+  return await getTweetById(res);
 };
 /**
  * Update Tweet
@@ -63,40 +57,19 @@ export const createTweet = async (text, userId) => {
  * @param {object} body
  * @returns update tweet
  *  - tweet : 수정된 tweet
- *  - null : 자원이 없는 경우
- * @throws update tweet fail
  */
 export const updateTweet = async (id, text) => {
   // 수정 내용 DB파일에 적용
-  const result = await tweetRepository.updateTweet(id, text);
-  if (result === null) {
-    return null;
-  }
-  // 실패시
-  if (!result) {
-    throw new Error('[update] 트윗 수정 실패');
-    // rollback()
-  }
-  // 성공시: 수정한 tweet을 리턴
-  return await getTweetById(id);
+  const res = await tweetRepository.updateTweet(id, text);
+  // 수정한 tweet을 리턴
+  return await getTweetById(res);
 };
 /**
  * Delete Tweet
  * @param {steing} id
  * @returns boolean
- * - null : 자원이 없는 경우
  * - true : 자원을 성공적으로 삭제 한 경우
- * @throws delete tweet fail
  */
 export const deleteTweet = async id => {
-  const result = await tweetRepository.deleteTweet(id);
-  if (result === null) {
-    return null;
-  }
-  // 실패시
-  if (!result) {
-    throw new Error('[delete] 트윗 삭제 실패');
-  }
-  // 성공시
-  return result;
+  return await tweetRepository.deleteTweet(id);
 };

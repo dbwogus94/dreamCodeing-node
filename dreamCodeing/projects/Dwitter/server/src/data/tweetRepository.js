@@ -1,25 +1,5 @@
-// DB 추가시 아래 코드제거 예정 (...writeFile 까지)
-import * as userService from '../services/userService.js';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { readFile, writeFile } from '../util/fileUtil.js';
-
-// es6의 module을 사용하면 __dirname, __filename를 아래처럼 사용해야 한다.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const TARGET = 'database/tweets.json';
-const file = path.join(__dirname, TARGET);
-
-// DB 추가시 제거
-export const readTweets = async () => {
-  return await readFile(file);
-};
-// DB 추가시 제거
-export const writeTweets = async tweets => {
-  return await writeFile(file, tweets);
-};
-
+import db from '../models/index.js';
+const { Tweet, User, sequelize } = db;
 /**
  * ### Select Only Tweets
  * - ex) SQL
@@ -33,53 +13,89 @@ const findOnlyTweets = async () => {
 /**
  * ### Select Tweets
  * - user의 정보가 포함된 모든 tweets
- * - ex) SQL : select * from tweet t join user u on t.userId = u.id;
+ * - ex) SQL :
+ *  SELECT
+ *    t.id, t.text, t.createAt, t.userId,
+ *    u.id, t.username, u.name, u.email, u.url
+ *  FROM tweet t JOIN user u
+ *  ON t.userId = u.id;
  * @returns tweet Array
  * - Array : tweet Array
  */
 export const findTweets = async () => {
-  // 1) DB에서 읽어온다.
-  const tweets = await findOnlyTweets();
-  const users = await userService.getUsers();
+  const tweets = await Tweet.findAll({
+    // ### include: JOIN 조회
+    include: [
+      {
+        model: User,
+        attributes: ['id', 'username', 'name', 'email', 'url'],
+        // 별칭 지정 : 'id' as 'userId' =>  [['id', userId], ...]
+      },
+    ],
+    //raw: true,
+    /* ## raw 옵션 사용 유무 차이점
+      - raw 옵션을 사용하지 않은 결과(배열의 구조)
+        [
+          {dataValuse, _previousDataValues, _changed, _options,isNewRecord},
+          ...
+        ]
+        => dataValuse = {id, text, createdAt, userId, User}
+        => 연관관계에 있는 데이터를 object형태로 가진다.
 
-  // 2) tweets에 있는 userId를 통해 {...tweet, ...user} 형태의 데이터를 만든다.
-  const result = [];
-  tweets.forEach(tweet => {
-    const { username, name, url } = users.find(user => user.id === tweet.userId);
-    result.push({ ...tweet, username, name, url });
+      - raw 옵션을 사용한 결과(배열의 구조)
+        [
+          {id, text, createdAt, 'User.id', 'User.username', 'User.name' ...}
+        ]
+
+      ### 결론 
+      - raw 옵션을 사용하지 않으면 한번 더 가공이 필요하다.
+        => tweets.map(tweet => tweet.toJOSN());
+      - raw 옵션을 사용하면 배열의 item 사용 방법을 변경해야한다.
+        => tweets[0]['User.id']
+     */
   });
 
-  return result;
+  // 검색 결과가 없으면 빈 배열을 리턴한다.
+  return tweets.length !== 0 //
+    ? tweets.map(tweet => tweet.toJSON()) // JSON 문자열로 반환 : JSON.stringify(findTweets, null, 2)
+    : tweets; // == []
 };
 
 /**
  * ### Select Tweets by username
  * - ex) SQL :
- *  select *
- *  from tweet t join user u
- *  on t.userId = u.id
- *  where t.username = ${tweet.username};
+ *  SELECT
+ *    t.id, t.text, t.createAt, t.userId,
+ *    u.id, t.username, u.name, u.email, u.url
+ *  FROM tweet t JOIN user u
+ *  ON t.userId = u.id
+ *  WHERE t.username = ${tweet.username};
  * @param {string} tweet.username
  * @returns tweet Array
  * - Array : tweet Array
- * - false : 일치하는 작성자가 없는 경우
  */
 export const findTweetsByUser = async username => {
-  const tweets = await findTweets();
-  const findList = tweets.filter(tweet => {
-    return tweet.username === username;
+  const findTweets = await Tweet.findAll({
+    include: {
+      model: User,
+      attributes: ['id', 'username', 'name', 'email', 'url'],
+      where: { username: username }, // join 이후 조건절
+    },
   });
-  return findList.length //
-    ? findList
-    : false;
+
+  return findTweets.length !== 0 //
+    ? findTweets.map(tweet => tweet.toJSON())
+    : findTweets; // === []
 };
 
 /**
  * ### Select Tweet by id
  * - ex) SQL :
- *  select *
- *  from tweet t join user u
- *  on t.userId = u.id
+ *  SELECT
+ *    t.id, t.text, t.createAt, t.userId,
+ *    u.id, t.username, u.name, u.email, u.url
+ *  FROM tweet t JOIN user u
+ *  ON t.userId = u.id
  *  where t.id = ${tweet.id};
  * @param {string} tweet.id
  * @returns tweet
@@ -87,14 +103,13 @@ export const findTweetsByUser = async username => {
  * - null : 자원이 없는 경우
  */
 export const findTweetById = async id => {
-  const tweets = await findOnlyTweets();
-  // id와 일치하는 트윗 가져오기
-  const found = tweets.find(tweet => tweet.id === id);
-  if (!found) {
-    return null;
-  }
-  const { username, name, url } = await userService.findById(found.userId);
-  return { ...found, username, name, url };
+  const findTweet = await Tweet.findByPk(id, {
+    include: {
+      model: User,
+      attributes: ['id', 'username', 'name', 'email', 'url'],
+    },
+  });
+  return findTweet ? findTweet.toJSON() : null;
 };
 
 /**
@@ -106,22 +121,27 @@ export const findTweetById = async id => {
  * @param {string} tweet.text - 글 내용
  * @param {string} tweet.userId - 작성자 id
  * @returns newTweet.id - 생성된 tweet id
+ * @throws sql error
  */
 export const createTweet = async (text, userId) => {
-  // 신규 트윗
-  const newTweet = {
-    id: Date.now().toString(), // TODO: DB에서 생성
-    createdAt: new Date(Date.now()), // TODO: DB에서 생성
-    text,
-    userId,
-  };
-  // 작성: 기존 tweets에 신규 트윗을 추가한다.
-  const tweets = await findOnlyTweets();
-  await writeTweets([newTweet, ...tweets]);
-  // TODO: DB추가시 실패 코드 필요
-
-  // 성공시 생성한 트윗 id 리턴
-  return newTweet.id;
+  // 트랜잭션 시작(생성)
+  const t = await sequelize.transaction();
+  try {
+    const newTweet = await Tweet.create(
+      {
+        text,
+        userId,
+      },
+      { transaction: t }
+    );
+    // 성공시
+    await t.commit();
+    return newTweet.id;
+  } catch (error) {
+    // 실패시
+    await t.rollback();
+    throw error; // 에러 미들웨어가 처리하도록 예외를 던진다.
+  }
 };
 
 /**
@@ -132,21 +152,21 @@ export const createTweet = async (text, userId) => {
  *  where id = ${tweet.id}
  * @param {string} tweet.id
  * @param {object} tweet.text
- * @returns boolean : !!성공 실패 코드
+ * @returns tweet.id
+ * @throws sql error
  */
 export const updateTweet = async (id, text) => {
-  // 1) 수정할 tweet 찾기
-  const tweets = await findOnlyTweets();
-  const found = tweets.find(tweet => tweet.id === id);
-  if (!found) {
-    return null;
+  const t = await sequelize.transaction();
+  try {
+    const tweet = await Tweet.findByPk(id, { transaction: t });
+    tweet.text = text;
+    await tweet.save({ transaction: t });
+    await t.commit();
+    return id;
+  } catch (error) {
+    await t.rollback();
+    throw error;
   }
-  // 2) tweet 수정
-  found.text = text;
-  // 3) 수정 내용 DB파일에 적용
-  await writeTweets(tweets);
-  return !!1;
-  // TODO: DB추가시 응답 코드리턴 ex) 성공시 1, 실패 0
 };
 
 /**
@@ -158,16 +178,14 @@ export const updateTweet = async (id, text) => {
  * - null : 자원이 없는 경우
  */
 export const deleteTweet = async id => {
-  // 1) 삭제할 tweet 찾기
-  const tweets = await findOnlyTweets();
-  const findIndex = tweets.findIndex(tweet => tweet.id === id);
-  if (findIndex === -1) {
-    return null;
+  const t = await sequelize.transaction();
+  try {
+    const tweet = await Tweet.findByPk(id, { transaction: t });
+    const res = await tweet.destroy({ transaction: t });
+    await t.commit();
+    return true;
+  } catch (error) {
+    t.rollback();
+    throw error;
   }
-  // 2) tweet 제거
-  tweets.splice(findIndex, 1);
-  // 삭제 DB파일에 반영
-  await writeTweets(tweets);
-  return !!1;
-  // TODO: DB추가시 응답 코드리턴 ex) 성공시 1, 실패 0
 };
