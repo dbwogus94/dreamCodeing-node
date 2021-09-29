@@ -120,7 +120,7 @@ export const findTweetById = async id => {
  *  values(${newTweet.text}, ${newTweet.userId});
  * @param {string} tweet.text - 글 내용
  * @param {string} tweet.userId - 작성자 id
- * @returns newTweet.id - 생성된 tweet id
+ * @returns newTweet - 신규 tweet
  * @throws sql error
  */
 export const createTweet = async (text, userId) => {
@@ -136,7 +136,8 @@ export const createTweet = async (text, userId) => {
     );
     // 성공시
     await t.commit();
-    return newTweet.id;
+    // newTweet에는 신규 생성된 Tweet이 들어간다.
+    return newTweet.toJSON();
   } catch (error) {
     // 실패시
     await t.rollback();
@@ -152,7 +153,7 @@ export const createTweet = async (text, userId) => {
  *  where id = ${tweet.id}
  * @param {string} tweet.id
  * @param {object} tweet.text
- * @returns tweet.id
+ * @returns update tweet
  * @throws sql error
  */
 export const updateTweet = async (id, text) => {
@@ -162,7 +163,8 @@ export const updateTweet = async (id, text) => {
     tweet.text = text;
     await tweet.save({ transaction: t });
     await t.commit();
-    return id;
+    // tweet에는 수정된 값이 들어간다.
+    return tweet.toJSON();
   } catch (error) {
     await t.rollback();
     throw error;

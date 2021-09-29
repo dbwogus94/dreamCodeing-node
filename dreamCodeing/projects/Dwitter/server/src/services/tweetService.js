@@ -46,10 +46,7 @@ export const getTweetById = async id => {
  * @returns new tweet
  */
 export const createTweet = async (text, userId) => {
-  // 신규 트윗 생성
-  const res = await tweetRepository.createTweet(text, userId);
-  // 방금 추가한 tweet 찾아서 리턴한다.
-  return await getTweetById(res);
+  return await tweetRepository.createTweet(text, userId);
 };
 /**
  * Update Tweet
@@ -59,10 +56,7 @@ export const createTweet = async (text, userId) => {
  *  - tweet : 수정된 tweet
  */
 export const updateTweet = async (id, text) => {
-  // 수정 내용 DB파일에 적용
-  const res = await tweetRepository.updateTweet(id, text);
-  // 수정한 tweet을 리턴
-  return await getTweetById(res);
+  return await tweetRepository.updateTweet(id, text);
 };
 /**
  * Delete Tweet
