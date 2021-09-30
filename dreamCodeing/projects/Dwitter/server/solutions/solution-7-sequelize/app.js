@@ -13,7 +13,8 @@ import tweetsRouter from './router/tweets.js';
 import authRouter from './router/auth.js';
 /* 소켓 */
 import { initSocket } from './connection/socket.js';
-import { db } from './db/database.js';
+/* sequelize 인스턴스화 */
+import { sequelize } from './db/database.js';
 
 const app = express();
 
@@ -34,11 +35,12 @@ app.use((err, req, res, next) => {
   res.sendStatus(500);
 });
 
-// db 연결 확인
-//db.getConnection().then(connection => console.log(connection));
+// ### sequelize models과 DB tables 동기화 => models에 맞춰 DB에 table 생성
+// ** 해당 옵션은 개발시점에만 사용해야한다.
+await sequelize.sync();
 
-// express 서버 리스닝
+// ### express 서버 리스닝
 const server = app.listen(config.host.port);
 
-// socket.io를 구현한 class Socket 인스턴스화
+// ### socket.io를 구현한 class Socket 인스턴스화
 initSocket(server);
