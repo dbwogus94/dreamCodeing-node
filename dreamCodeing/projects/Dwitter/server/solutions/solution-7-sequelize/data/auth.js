@@ -5,7 +5,7 @@ const DataTypes = SQ.DataTypes;
 
 /* ### 1. sequelize 모델 생성 */
 // 인스턴스화된 Sequelize를 사용해 Model을 정의한다.
-const User = sequelize.define(
+export const User = sequelize.define(
   'user',
   {
     id: {

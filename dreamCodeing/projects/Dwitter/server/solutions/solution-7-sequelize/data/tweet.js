@@ -2,39 +2,69 @@
  * ### Model 계층 : DATA에 관한 보관, CRUD, 가공을 담당한다.
  * - data(리소스) 조작(CURD)과 가공을 담당하는 계층이다.
  * - Spring으로 생각하면 service계층과 DAO 계층이 여기에 속한다.
- *
- * ### 리펙터링
- * 1단계) data를 다루는 코드는 data 계층으로
- *  기존 tweets.js에 있던 data를 조작하는 로직을 해당 data 계층으로 이동시킨다.
- * 2단계) 함수명에서 중복되는 이름을 제거한다.
- *  data 계층을 사용하는 곳에서 이름을 tweetRepository로 사용한다
- *  그렇기 때문에 함수명에 tweet에 들어가지 않게 명명한다.
- *
- * ### solution-4-jwt에서 수정
- * 유저의 정보는 data/auth.js에서 관리하기 한다.
- * 그렇기 때문에 tweets에 있던 유저의 정보를 userId로 변경하고
- * userId를 통해 유저의 정보에 접근하도록 변경한다.
- *
- * 아래 함수 모두 userId를 통해 user의 정보에 접근하도록 변경
- * - getAll()
- * - getAllByUsername
- * - getById()
- * - create()
- * - update()
- *
- * ### solution-6-db
- * - 모든 tweet 메서드 db에서 조회하도록 변경
  */
 
-import { db } from '../db/database.js'; // MySQL DB connection pool을 가진 모듈
+// app.js에서 인스턴스화된 sequelize import
+import { sequelize } from '../db/database.js';
+import { User } from './auth.js';
 
-const SELECT_JOIN = `
-        SELECT 
-          tw.id, tw.text, tw.createdAt, tw.userId, us.username, us.name, us.email, us.url
-        FROM tweets tw JOIN users us
-        ON tw.userId = us.id `;
+/* ES6 module에서 sequlize 사용하는 방법 
+   - sequlize는 CommonJS를 기본적으로 지원한다.
+   - 때문에 object deconstructor를 바로 사용할 수 없다.
+   - 즉, object deconstructor 불가 => import { DataTypes, Sequelize } from 'sequelize'; X
+*/
+import SQ from 'sequelize';
+const DataTypes = SQ.DataTypes;
+const Sequelize = SQ.Sequelize;
 
-const ORDER_DESC = ' ORDER BY tw.createdAt DESC ';
+/* ### 1. sequelize 모델 생성 */
+const Tweet = sequelize.define(
+  'tweet',
+  {
+    id: {
+      type: DataTypes.INTEGER, // int
+      autoIncrement: true, // AUTO_INCREMENT 사용
+      allowNull: false, // null 허용 x
+      primaryKey: true, // PK로 사용
+    },
+    text: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+  },
+  {
+    tableName: 'tweets_solution',
+  }
+);
+
+/* ### 2. 연관관계 정의  */
+// N:1관계 정의 => Tweet(N) : User(1)
+// => 트윗은 유저에 포함한다.
+Tweet.belongsTo(User);
+
+/* ### 3. 연관관계를 가진 tweet, user를 플렛한 형태로 가져오는 속성 정의 */
+const INCLUDE_USER = {
+  attributes: [
+    'id',
+    'text',
+    'createdAt',
+    'userId',
+    // 플렛한 형태로 조회 하기 1) : user.name as name
+    [Sequelize.col('user.name'), 'name'],
+    [Sequelize.col('user.username'), 'username'],
+    [Sequelize.col('user.email'), 'email'],
+    [Sequelize.col('user.url'), 'url'],
+  ],
+  // 연관관계 포함하여 조회
+  include: {
+    model: User, // User과 포함관계를 가진다.
+    // 플렛한 형태로 조회 하기 2) : 포함관계 attribute는 없음
+    attributes: [],
+  },
+};
+
+/* ### 4. 정렬 속성 정의 */
+const ORDER_DESC = { order: [['createdAt', 'DESC']] };
 
 /**
  * 유저의 정보를 담은 전체 tweet을 가져온다.
@@ -42,9 +72,7 @@ const ORDER_DESC = ' ORDER BY tw.createdAt DESC ';
  * tweets = [tweet + user, ...]
  */
 export async function getAll() {
-  return db
-    .execute(`${SELECT_JOIN} ${ORDER_DESC}`) // 최신 기준으로 정렬
-    .then(result => result[0]);
+  return Tweet.findAll({ ...INCLUDE_USER, ...ORDER_DESC });
 }
 /**
  * username(작성자)와 일치하는 모든 tweet 조회
@@ -53,9 +81,14 @@ export async function getAll() {
  * tweets = [tweet + user, ...]
  */
 export async function getAllByUsername(username) {
-  return db
-    .execute(`${SELECT_JOIN} WHERE us.username = ? ${ORDER_DESC}`, [username]) // 최신 기준으로 정렬
-    .then(result => result[0]);
+  return Tweet.findAll({
+    ...INCLUDE_USER,
+    ...ORDER_DESC,
+    include: {
+      ...INCLUDE_USER.include,
+      where: { username }, // where user.username = ${username}
+    },
+  });
 }
 /**
  * tweet의 id와 일치하는 tweet 조회
@@ -64,9 +97,8 @@ export async function getAllByUsername(username) {
  * tweet
  */
 export async function getById(id) {
-  return db
-    .execute(`${SELECT_JOIN} WHERE tw.id = ?`, [id]) //
-    .then(result => result[0][0]);
+  // id로 연관관계 플렛하게 조회
+  return Tweet.findByPk(id, INCLUDE_USER);
 }
 /**
  * 신규 tweet 생성
@@ -76,11 +108,12 @@ export async function getById(id) {
  * tweet + user
  */
 export async function create(text, userId) {
-  return db
-    .execute('INSERT INTO tweets(text, createdAt, userId) VALUES(?, NOW(), ?)', [text, userId]) //
-    .then(result => getById(result[0].insertId));
-  // insertId: insert되 row PK
-  // 리턴받은 insertId를 사용하여 조회
+  return Tweet.create({ text, userId }).then(data => {
+    // data = {dataValues: {…}, _previousDataValues: {…}, _changed: Set(0), _options: {…}, isNewRecord: false}
+    // => dataValues는 INSERT SQL로 생성된 row 데이터를 가진다.
+    // => 즉, 생성된 row 데이터가 가진 id를 사용하여 getById 조회
+    return getById(data.dataValues.id);
+  });
 }
 /**
  * tweet의 id와 일치하는 tweet 수정
@@ -90,20 +123,23 @@ export async function create(text, userId) {
  * tweet + user
  */
 export async function update(id, text) {
-  return db
-    .execute('UPDATE tweets SET text = ? WHERE id = ?', [text, id]) //
-    .then(result => {
-      return getById(id);
-    }); // 수정 결과 조회
+  return Tweet.findByPk(id, INCLUDE_USER) //
+    .then(tweet => {
+      tweet.text = text;
+      // 재조회 : tweet.save() UPDATE SQL 이후 데이터를 리턴한다.
+      // save()의 장점은 이전 조회에 연관관계가 포함되어 있다면,
+      // 자동으로 연관관계를 포함하여 재조회한다.
+      return tweet.save();
+    });
 }
 /**
  * tweet의 id와 일치하는 트윗 삭제
  * @param {string} id
  */
 export async function remove(id) {
-  return db
-    .execute('DELETE FROM tweets WHERE id = ?', [id]) //
-    .then(result => console.log(result[0].affectedRows));
-  // result[0].affectedRows : 삭제 요청 결과를 가지고 있음,
-  // ex) 1개 삭제 쿼리에서 성공이면 1, 10개 요청중 9개 성공이면 9를 가진다.
+  return Tweet.findByPk(id) //
+    .then(tweet => {
+      // 조회한 row를 삭제 한다. -> DELETE SQL
+      tweet.destroy();
+    });
 }
