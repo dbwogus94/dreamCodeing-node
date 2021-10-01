@@ -35,7 +35,8 @@ app.use((err, req, res, next) => {
   res.sendStatus(500);
 });
 
-// ### sequelize models과 DB tables 동기화 => models에 맞춰 DB에 table 생성
+// ### sequelize models과 DB tables 동기화
+// => models에 대응하는 table이 없으면 Create Table SQL 요청
 // ** 해당 옵션은 개발시점에만 사용해야한다.
 await sequelize.sync();
 
