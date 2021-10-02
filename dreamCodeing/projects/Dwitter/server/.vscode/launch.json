@@ -11,6 +11,7 @@
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}\\src\\app.js",
       "outFiles": ["${workspaceFolder}/**/*.js"],
+      "envFile": "${workspaceFolder}\\.env.dev",
       "runtimeExecutable": "nodemon",
       "restart": true
     },
@@ -21,6 +22,49 @@
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}\\solutions\\solution-4-jwt\\app.js",
       "outFiles": ["${workspaceFolder}/**/*.js"],
+      "runtimeExecutable": "nodemon",
+      "restart": true
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "test solution-5",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}\\solutions\\solution-5-socket\\app.js",
+      "outFiles": ["${workspaceFolder}/**/*.js"],
+      "runtimeExecutable": "nodemon",
+      "restart": true
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "test solution-6",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}\\solutions\\solution-6-db\\app.js",
+      "outFiles": ["${workspaceFolder}/**/*.js"],
+      "envFile": "${workspaceFolder}\\solutions\\solution-6-db\\.env.solution",
+      "runtimeExecutable": "nodemon",
+      "restart": true
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "test solution-7",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}\\solutions\\solution-7-sequelize\\app.js",
+      "outFiles": ["${workspaceFolder}/**/*.js"],
+      "envFile": "${workspaceFolder}\\solutions\\solution-7-sequelize\\.env.solution",
+      "runtimeExecutable": "nodemon",
+      "restart": true
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "test_sequelize",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}\\src\\test\\sequelize\\app.js",
+      "outFiles": ["${workspaceFolder}/**/*.js"],
+      "envFile": "${workspaceFolder}\\src\\test\\sequelize\\.env.dev",
       "runtimeExecutable": "nodemon",
       "restart": true
     }
