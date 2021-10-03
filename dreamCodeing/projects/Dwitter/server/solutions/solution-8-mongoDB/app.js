@@ -13,6 +13,8 @@ import tweetsRouter from './router/tweets.js';
 import authRouter from './router/auth.js';
 /* 소켓 */
 import { initSocket } from './connection/socket.js';
+/* mongoDB */
+import { connectDB } from './db/database.js';
 
 const app = express();
 
@@ -33,7 +35,12 @@ app.use((err, req, res, next) => {
   res.sendStatus(500);
 });
 
-const server = app.listen(config.host.port);
-
-// socket.io를 구현한 class Socket 인스턴스화
-initSocket(server);
+/* mongoDB 연결 */
+connectDB()
+  .then(db => {
+    // mongoDB 연결 성공시 -> server 리슨 -> socket 생성
+    console.log('mongoDB init!');
+    const server = app.listen(config.host.port);
+    initSocket(server);
+  })
+  .catch(console.error);

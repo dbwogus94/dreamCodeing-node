@@ -55,4 +55,7 @@ export const config = {
   host: {
     port: required('HOST_PORT', 8080),
   },
+  mongoDB: {
+    host: required('MONGO_DB_HOST'),
+  },
 };
