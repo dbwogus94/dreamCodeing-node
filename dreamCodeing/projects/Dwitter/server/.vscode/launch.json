@@ -60,6 +60,17 @@
     {
       "type": "pwa-node",
       "request": "launch",
+      "name": "test solution-8",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}\\solutions\\solution-8-mongoDB\\app.js",
+      "outFiles": ["${workspaceFolder}/**/*.js"],
+      "envFile": "${workspaceFolder}\\solutions\\solution-8-mongoDB\\.env.solution",
+      "runtimeExecutable": "nodemon",
+      "restart": true
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
       "name": "test_sequelize",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}\\src\\test\\sequelize\\app.js",
