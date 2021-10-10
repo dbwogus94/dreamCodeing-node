@@ -1,0 +1,21 @@
+{
+  /*##  @babel/plugin-transform-modules-commonjs에서 사용하는 설정
+    - jest에서 es6 module를 인식하지 못한다. 
+    - 때문에 bable을 사용하여 commonjs 모듈로 변경하게 하는 설정이 필요하여 추가하였다.
+    
+    ## jest를 사용하는 test에서만 바벨이 사용된다.
+      ### jest를 사용하는 npm 명령에서 사용이 가능하다.
+      - npm test 
+      - npm run test
+      - npm run test:watch
+
+      ### jest 독립 테스트 파일 실행에도 사용이 가능하다.
+      - jest run src/test/unit/tesk.test.js
+
+  */
+  "env": {
+    "test": {
+      "plugins": ["@babel/plugin-transform-modules-commonjs"]
+    }
+  }
+}
