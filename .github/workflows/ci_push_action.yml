@@ -1,0 +1,86 @@
+# This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: push ci
+
+# event 감지 : push와 pr 감지
+on: [ push ]
+
+# jobs은 실행 엑션과 엑션을 위한 설정 모음이다. jobs안에 step이 들어간다
+jobs:
+  # Job ID: 문자와 -(대시), _(언더바)로 구성된 Job 고유 식별자
+  Run_Jest:
+    # 우분투 가상환경 사용
+    runs-on: ubuntu-latest
+    
+    # 환경설정
+    environment: .env.test   # 사용할 secrets 스코프
+    env:                     # secrets에 있는 비밀정보를 통해 환경변수 설정
+      # jwt
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_EXPIRESIN: ${{ secrets.JWT_EXPIRESIN }}
+      JWT_ISSUER: ${{ secrets.JWT_ISSUER }}
+      JWT_SUBJECT: ${{ secrets.JWT_SUBJECT }}
+      
+      # bcrypt
+      BCRYPT_SALT_ROUNDS: ${{ secrets.BCRYPT_SALT_ROUNDS }}
+      # server config
+      HOST_PORT: ${{ secrets.HOST_PORT }} 
+      CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
+      
+      # mongoDB Atlas host 
+      MONGO_DB_HOST: ${{ secrets.MONGO_DB_HOST }}
+      
+    strategy:
+      matrix:
+        node-version: [14.x]   
+        # 테스트 할 노드 버전, 
+        # 배열이며, 다른 버전을 추가하면 모든 버전에 대해 병렬로 테스트 진행
+        # 여러 버전을 테스트 하려면 node_modules는 케싱해서 사용해야한다.
+    
+    # steps 해아하는 엑션 모음
+    steps:
+    # step 1) Step은 리포지토리를 체크아웃 하여 테스트 준비 
+    - uses: actions/checkout@v2          # uses 이미 정의된 actions 사용하는 것
+    
+    # step 2) node 설치
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+        
+    # step 3) npm으로 모듈 모두 설치 - npm install 사용x
+    - name: Install dependencies - npm ci
+      # package-lock.json을 사용하여 dependencies 설치
+      run: npm ci     
+      
+    # step 4) jest 테스트 시작
+    - name: run test code
+      run: npm test
+      
+    # step 5) 테스트 실패시
+    - name: if fail
+      uses: actions/github-script@0.2.0  # 마켓플레이스에서 github-script 액션을 사용한다.
+      
+      with:
+        # github-script를 사용하려면 token 필요
+        github-token: ${{github.token}}  # github token을 선언해준다
+        # github-script에 원하는 스크립트를 작성
+        script: |                        
+          const ref = "${{github.ref}}"
+          const pull_number = Number(ref.split("/")[2])
+          await github.pulls.createReview({
+            ...context.repo,
+            pull_number,
+            body:"테스트코드를 다시 확인해주세요. ",
+            event: "REQUEST_CHANGES"
+          })
+          await github.pulls.update({
+            ...context.repo,
+            pull_number,
+            state: "closed"
+                })
+     
+      if: failure()   # step 5) if fail의 마지막 코드
+      # if: failure() : 이전 step이 실패한 경우에만 이 step을 실행한다
+      # 즉, stap 4)인 "run test code"가 실패한 경우 step 5)인 "if fail"이 실행된다.
