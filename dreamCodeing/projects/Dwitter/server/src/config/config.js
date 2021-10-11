@@ -10,13 +10,32 @@ import path from 'path';
 
 // 2) 사용환경에 따라 다른 환경변수를 읽어오게 설정
 dotenv.config({
-  path: path.resolve(
-    process.cwd(), // 프로젝트 루트 경로
-    process.env.NODE_ENV == 'production' //
-      ? '.env' // 서비스 환경인 경우
-      : '.env.dev' // 개발 환경인 경우
-  ),
+  path: path.resolve(getEnvFile()),
+
+  /*### path.resolve('.env')
+    - path.resolve()에 '경로 구분자' 없는 문자열을 인자로 전달하는 경우
+    - process.cwd()를 포함한 경로를 문자열로 내보낸다.
+    - 즉, path.join(process.cwd(), '.env');과 동일 하다.
+  */
 });
+
+/**
+ * ### 노드 실행 환경에 따른 .env 파일명 리턴
+ * @returns {string} .env file name
+ */
+function getEnvFile() {
+  switch (process.env.NODE_ENV) {
+    // 개발 환경
+    case 'production':
+      return '.env.dev';
+    // 테스트 환경 => jest를 사용하는 경우 자동으로 NODE_ENV를 'test'로 설정한다.
+    case 'test':
+      return '.env.test';
+    // 서비스 환경
+    default:
+      return '.env';
+  }
+}
 
 /**
  * ### key에 해당하는 값을 환경변수에서 가져온다.
@@ -45,6 +64,9 @@ export const config = {
     saltRounds: Number(required('BCRYPT_SALT_ROUNDS')),
   },
   host: {
-    port: required('HOST_PORT', 8080),
+    port: required('HOST_PORT', '8080'),
+  },
+  mongoDB: {
+    host: required('MONGO_DB_HOST'),
   },
 };
