@@ -4,7 +4,9 @@
 name: push ci
 
 # event 감지 : push와 pr 감지
-on: [ push ]
+on: 
+  push:
+    branches: [ myDB_mongoDB ]
 
 # jobs은 실행 엑션과 엑션을 위한 설정 모음이다. jobs안에 step이 들어간다
 jobs:
