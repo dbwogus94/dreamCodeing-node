@@ -7,7 +7,7 @@ import moment from 'moment';
  * @returns Db instance
  * - mongo database Db class instance
  */
-export async function connectDB() {
+async function connectDB() {
   return MongoClient.connect(config.mongoDB.host) //
     .then(client => client.db());
 }
@@ -17,7 +17,7 @@ export async function connectDB() {
  * @param {Db} db - Db instance
  * @throws fail drop collections
  */
-export async function dropCollection(db) {
+async function dropCollection(db) {
   const collections = await getCollections(db);
   const results = await asyncDrop(collections);
 
@@ -51,7 +51,7 @@ export async function dropCollection(db) {
  * @param {Db} db
  * @returns collections
  */
-export async function getCollections(db) {
+async function getCollections(db) {
   /*db.listCollections() : db에 존재하는 모든 collection 정보를 가진 커서 ListCollectionsCursor를 가져온다.
     - ListCollectionsCursor에서 얻어온 collection은 실제 컬렉션 객체(db.collection()) 과 다르다
     - ListCollectionsCursor에서 얻어온 collection은 컬렉션 정보를 가진 object를 내보낸다.
@@ -62,3 +62,6 @@ export async function getCollections(db) {
   collections.filter(collection => collection.type === 'collection');
   return collections.map(collection => db.collection(collection.name));
 }
+
+const database = { connectDB, dropCollection, getCollections };
+export default database;
