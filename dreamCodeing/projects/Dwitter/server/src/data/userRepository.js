@@ -1,74 +1,52 @@
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { readFile, writeFile } from '../util/fileUtil.js';
-
-// es6의 module을 사용하면 __dirname, __filename를 아래처럼 사용해야 한다.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const TARGET = 'database/users.json';
-const file = path.join(__dirname, TARGET);
-
-export const readUsers = async () => {
-  return await readFile(file);
-};
-
-export const writeUsers = async users => {
-  return await writeFile(file, users);
-};
+import { ObjectId } from 'mongodb';
+import database from '../db/database.js';
+const { getDb } = database;
 
 /**
- * ### Select users
- * - ex) SQL : select * from user;
- * @returns users
+ * get users collection
+ * @returns {Collection} users collection
  */
-export const findUsers = async () => {
-  return await readUsers();
-};
+export function getUsers() {
+  return getDb().collection('users');
+}
 
 /**
- * ### Select user by username
- * - ex) SQL : select * from user where username = ${user.username}
+ * Select user by username
  * @param {string} user.username
- * @returns user
+ * @returns
+ * - user : {_id, id, username, name, password, email, url}
  * - null : 자원없음
  */
 export const findByUsername = async username => {
-  const users = await findUsers();
-  const result = users.find(user => user.username === username);
-  return result ? result : null;
+  const user = await getUsers().findOne({ username });
+  return user //
+    ? { ...user, id: user._id.toHexString() }
+    : null;
+  // _id: ObjectId(_id)
+  // id: ObjectId(_id).toString()
 };
 
 /**
- * ### Create user
- * - ex) SQL :
- * insert into
- * user(username, password, name, email, url)
- * values(${user.username}, ${user.password}, ${user.name}, ${user.email}, ${user.url});
+ * Create user
  * @param {object} user { username, password, name, email, url }
- * @return boolean - 성공 실패 여부
+ * @return Promise<InsertOneResult<TSchema>>;
+ * - InsertOneResult.acknowledged: 생성 성공 여부
+ * - InsertOneResult.insertedId: 생성된 document _id
  */
 export const createUser = async user => {
-  const newUser = { id: Date.now().toString(), ...user };
-  const users = await findUsers();
-  users.push(newUser);
-  await writeUsers(users);
-  return !!1;
-  // TODO: DB추가시 응답 코드리턴 ex) 성공시 1, 실패 0
+  return getUsers().insertOne(user);
 };
 
 /**
- * ### Select user by id
- * - ex) SQL : select * from user where id = ${user.id}
+ * Select user by id
  * @param {string} user.id
  * @returns
- * - user
- * - null
+ * - user : {_id, id, username, name, email, url}
+ * - null : 자원없음
  */
 export const findById = async id => {
-  const users = await findUsers();
-  const result = users.find(user => user.id === id);
-  return result //
-    ? result
+  const user = await getUsers().findOne({ _id: ObjectId(id) }, { password: 0 }); // { password: 0 } 제외할 필드
+  return user //
+    ? { ...user, id: user._id.toHexString() }
     : null;
 };

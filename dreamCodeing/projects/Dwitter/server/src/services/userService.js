@@ -8,23 +8,14 @@ import * as userRepository from '../data/userRepository.js';
  */
 
 /**
- * get All Users
- * @returns user Array
- * - Array : user Array
- */
-export const getUsers = async () => {
-  return await userRepository.findUsers();
-};
-
-/**
  * select by username
  * @param {string} username
  * @returns
- * - user
+ * - user { username, password, name, email, url }
  * - null
  */
 export const findByUsername = async username => {
-  return await userRepository.findByUsername(username);
+  return userRepository.findByUsername(username);
 };
 
 /**
@@ -36,23 +27,16 @@ export const findByUsername = async username => {
  */
 export const createUser = async user => {
   // 신규 유저 생성
-  const result = await userRepository.createUser(user);
-  // 실패시
-  if (!result) {
-    throw new Error('[insert] 유저 생성 실패');
-    // rollback()
-  }
-  // 성공시
-  return true;
+  return !!(await userRepository.createUser(user));
 };
 
 /**
  * 유저의 id로 조회
  * @param {string} user.id
  * @returns
- * - user
+ * - user { username, name, email, url }
  * - null
  */
 export const findById = async id => {
-  return await userRepository.findById(id);
+  return userRepository.findById(id);
 };
