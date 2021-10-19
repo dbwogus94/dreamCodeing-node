@@ -2,14 +2,48 @@ import { config } from '../config/config.js';
 import { MongoClient } from 'mongodb';
 import moment from 'moment';
 
+let client;
+let db;
 /**
  * MongoDB connection
  * @returns Db instance
  * - mongo database Db class instance
  */
 async function connectDB() {
-  return MongoClient.connect(config.mongoDB.host) //
-    .then(client => client.db());
+  client = await MongoClient.connect(config.mongoDB.host);
+  db = client.db();
+  return db;
+}
+/**
+ * get Db instance
+ * @returns Db instance
+ */
+function getDb() {
+  if (!db) {
+    throw new Error('Please call connectDB first');
+  }
+  return db;
+}
+/**
+ * get MongoClient instance
+ * @returns MongoClient instance
+ */
+function getClient() {
+  if (!client) {
+    throw new Error('Please call connectDB first');
+  }
+  return client;
+}
+/**
+ * close MongoDB connection
+ * - mongoClient.close()를 사용하지 말고
+ * - database.close()를 사용해야 한다.
+ * - 그래야 app구동시 생성된 MongoClient와 Db 인스턴스를 제거가 가능하다.
+ */
+async function close() {
+  await client.close();
+  db = undefined;
+  client = undefined;
 }
 
 /**
@@ -37,7 +71,6 @@ async function dropCollection(db) {
     );
     return results;
   }
-
   function printDropLog(collections) {
     collections.forEach(collection => {
       //console.info(`[${collection.s.namespace.db}] Drop '${collection.s.namespace.collection}' Collection`);
@@ -63,5 +96,5 @@ async function getCollections(db) {
   return collections.map(collection => db.collection(collection.name));
 }
 
-const database = { connectDB, dropCollection, getCollections };
+const database = { connectDB, dropCollection, getCollections, getClient, getDb, close };
 export default database;
