@@ -71,13 +71,25 @@
     {
       "type": "pwa-node",
       "request": "launch",
-      "name": "test_sequelize",
+      "name": "test_mongoDB",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}\\src\\test\\sequelize\\app.js",
+      "program": "${workspaceFolder}\\src\\test\\mongotest\\tasks.js",
       "outFiles": ["${workspaceFolder}/**/*.js"],
-      "envFile": "${workspaceFolder}\\src\\test\\sequelize\\.env.dev",
+      "envFile": "${workspaceFolder}\\src\\test\\mongotest\\.env",
       "runtimeExecutable": "nodemon",
       "restart": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Jest Tests",
+      "program": "${env:APPDATA}\\npm\\node_modules\\jest\\bin\\jest.js",
+      "args": ["-i --detectOpenHandles"],
+      "skipFiles": ["<node_internals>/**/*.js", "node_modules"],
+      "internalConsoleOptions": "openOnSessionStart",
+      "outFiles": ["${workspaceRoot}/dist/**/*"],
+      "_envFile": "${workspaceFolder}/.env.test",
+      "_comment": "it's jest test configuration"
     }
   ]
 }
