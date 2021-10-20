@@ -41,11 +41,11 @@ export const createUser = async user => {
  * Select user by id
  * @param {string} user.id
  * @returns
- * - user : {_id, id, username, name, email, url}
+ * - user : {_id, id, username, name, url}
  * - null : 자원없음
  */
 export const findById = async id => {
-  const user = await getUsers().findOne({ _id: ObjectId(id) }, { password: 0 }); // { password: 0 } 제외할 필드
+  const user = await getUsers().findOne({ _id: ObjectId(id) }, { projection: { password: 0, email: 0 } }); // 제외할 필드 설정
   return user //
     ? { ...user, id: user._id.toHexString() }
     : null;
