@@ -23,6 +23,7 @@
     "helmet": "^4.6.0",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.1",
+    "moment-timezone": "^0.5.33",
     "mongodb": "^4.1.2",
     "morgan": "^1.10.0",
     "mysql2": "^2.3.0",
