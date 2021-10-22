@@ -51,7 +51,7 @@ app.use((req, res, next) => {
 connectDB()
   .then(async db => {
     // 존재하는 collection 모두 drop
-    await dropCollection(db);
+    //await dropCollection(db);
 
     // 2) expree http server listen
     const server = app.listen(config.host.port, () => {

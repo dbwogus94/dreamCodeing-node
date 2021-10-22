@@ -1,15 +1,11 @@
 import * as tweetRepository from '../data/tweetRepository.js';
+import * as userRepository from '../data/userRepository.js';
 /**
- * model 계층
- * - service 계층 또는 data 계층이라고 한다.
- * - 리소스를 조회, 조작, 가공하는 계층이다.
- * - spring의 경우 Model 계층을 service와 DAO 계층으로 나누어서 사용하였다.
- *
- * ### 수정
- * - 기존 :
- *  tweetService에는 비즈니스와 관련없는 데이터 관련 로직이 들어있어 분리하였음.
- * - 변경 :
- *  데이터 관련 로직은 tweetRepository로 이동함.
+ * ### service
+ * - service 계층은 프로그램의 주 관심사항에 대한 로직이 들어간다
+ * - service 계층은 여러 service를 호출할 수도 있다 .
+ * - service 로직은 기본적으로 repository를 사용하여 DB와 통신한다.
+ * - 때문에 트랜젝션 처리는 service로직에서 주로 호출 처리한다.
  */
 
 /**
@@ -44,59 +40,50 @@ export const getTweetById = async id => {
  * @param {string} text
  * @param {string} userId
  * @returns new tweet
- * @throws insert tweet fail
+ * @throws MongoDB insert error
  */
 export const createTweet = async (text, userId) => {
-  // 신규 트윗 생성
-  const result = await tweetRepository.createTweet(text, userId);
-  // 실패시
-  if (!result) {
-    throw new Error('[insert] 트윗 생성 실패');
-    // rollback()
+  try {
+    // 트윗에 추가할 user 조회
+    const user = await userRepository.findById(userId);
+    // 신규 트윗 생성
+    const result = await tweetRepository.createTweet(text, user);
+    // 방금 추가한 tweet 찾아서 리턴한다.
+    return tweetRepository.findTweetById(result.insertedId);
+  } catch (error) {
+    // rallback()
+    throw error;
   }
-  // 성공시 : 방금 추가한 tweet 찾아서 리턴한다.
-  return await getTweetById(result);
 };
 /**
  * Update Tweet
  * @param {string} id
- * @param {object} body
+ * @param {string} text
  * @returns update tweet
  *  - tweet : 수정된 tweet
- *  - null : 자원이 없는 경우
- * @throws update tweet fail
+ * @throws MongoDB update error
  */
 export const updateTweet = async (id, text) => {
-  // 수정 내용 DB파일에 적용
-  const result = await tweetRepository.updateTweet(id, text);
-  if (result === null) {
-    return null;
+  try {
+    // 수정 내용 DB파일에 적용
+    await tweetRepository.updateTweet(id, text);
+    // 성공시: 수정한 tweet을 리턴
+    return tweetRepository.findTweetById(id);
+  } catch (error) {
+    // rallback()
+    throw error;
   }
-  // 실패시
-  if (!result) {
-    throw new Error('[update] 트윗 수정 실패');
-    // rollback()
-  }
-  // 성공시: 수정한 tweet을 리턴
-  return await getTweetById(id);
 };
 /**
  * Delete Tweet
  * @param {steing} id
- * @returns boolean
- * - null : 자원이 없는 경우
- * - true : 자원을 성공적으로 삭제 한 경우
- * @throws delete tweet fail
+ * @throws MongoDB delete error
  */
 export const deleteTweet = async id => {
-  const result = await tweetRepository.deleteTweet(id);
-  if (result === null) {
-    return null;
+  try {
+    await tweetRepository.deleteTweet(id);
+  } catch (error) {
+    //rollback()
+    throw error;
   }
-  // 실패시
-  if (!result) {
-    throw new Error('[delete] 트윗 삭제 실패');
-  }
-  // 성공시
-  return result;
 };
