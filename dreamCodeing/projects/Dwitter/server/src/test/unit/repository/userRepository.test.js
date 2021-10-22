@@ -68,20 +68,19 @@ describe('findByUsername', () => {
     await users.insertMany(sampleData);
   });
 
-  it('should return user document if correct username argument', async () => {
+  it('should return user document if correct username parament', async () => {
     const findUser = await userRepository.findByUsername('bob');
-    console.log(findUser);
     expect(findUser).toBeTruthy();
     expect(findUser.username).toBe('bob');
     expect(findUser.name).toBe('Bob');
   });
 
-  it('should return null if incorrect username argument', async () => {
+  it('should return null if incorrect username parament', async () => {
     const findUser = await userRepository.findByUsername('test');
     expect(findUser).toBeNull();
   });
 
-  it('should return null if unexist username argument', async () => {
+  it('should return null if unexist username parament', async () => {
     await expect(userRepository.findByUsername()).resolves.toBeNull();
   });
 });
@@ -114,24 +113,24 @@ describe('findById', () => {
     id = result.insertedIds[0];
   });
 
-  it('should get user document if correct id argument', async () => {
+  it('should get user document if correct id parament', async () => {
     const findUser = await userRepository.findById(id);
     expect(findUser).toBeTruthy();
     expect(findUser.username).toBe('bob');
     expect(findUser.name).toBe('Bob');
   });
 
-  it('should return null if incorrect id argument', async () => {
+  it('should return null if incorrect id parament', async () => {
     const findUser = await userRepository.findById('616eb884c2517436998725fa');
     expect(findUser).toBeNull();
   });
 
-  it('should return null if unexist id argument', async () => {
+  it('should return null if unexist id parament', async () => {
     const findUser = await userRepository.findById();
     expect(findUser).toBeNull();
   });
 
-  it('should Throw an TypeError if incorrect type id argument', async () => {
+  it('should Throw an TypeError if incorrect type id parament', async () => {
     /* ### 비동기 에러 테스트 1 - 이미 throw된 에러를 자체를 확인 */
     await expect(userRepository.findById('12314')).rejects.toBeInstanceOf(TypeError);
 
@@ -141,14 +140,14 @@ describe('findById', () => {
     // } catch (error) {
     //   expect(() => {
     //     throw error;
-    //   }).toThrow(new TypeError('Argument passed in must be a Buffer or string of 12 bytes or a string of 24 hex characters'));
+    //   }).toThrow(new TypeError('parament passed in must be a Buffer or string of 12 bytes or a string of 24 hex characters'));
     // }
 
     /* ### 비동기 에러 테스트 3 - (Promise사용)강제로 에러를 던지는 익명함수를 정의하여 테스트 */
     // return userRepository.findById('1234').catch(error => {
     //   expect(() => {
     //     throw error;
-    //   }).toThrow(new TypeError('Argument passed in must be a Buffer or string of 12 bytes or a string of 24 hex characters'));
+    //   }).toThrow(new TypeError('parament passed in must be a Buffer or string of 12 bytes or a string of 24 hex characters'));
     // });
   });
 });
