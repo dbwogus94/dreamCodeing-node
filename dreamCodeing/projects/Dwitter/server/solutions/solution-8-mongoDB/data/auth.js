@@ -30,6 +30,6 @@ export async function findById(id) {
 */
 function mapOptionalUser(user) {
   return user
-    ? { ...user, id: user._id } // 서비스에 필요한 데이터 형식으로 변경
+    ? { ...user, id: user._id.toString() } // 서비스에 필요한 데이터 형식으로 변경
     : user; // null
 }
