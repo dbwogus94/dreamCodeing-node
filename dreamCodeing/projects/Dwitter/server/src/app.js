@@ -1,5 +1,6 @@
 // 날짜에 대한 포멧을 지원하는 모듈
-import moment from 'moment';
+import moment from 'moment-timezone';
+moment.tz.setDefault('Asia/Seoul');
 // 설정값을 가진 객체 호출
 import { config } from './config/config.js';
 // app에 적용되는 공통 모듈
@@ -46,7 +47,7 @@ app.use((req, res, next) => {
 });
 
 /* 5. 네트워크 : mongoDB connected, express listen, socket connected */
-
+let server;
 // 1) mongoDB 연결
 connectDB()
   .then(async db => {
@@ -54,11 +55,14 @@ connectDB()
     //await dropCollection(db);
 
     // 2) expree http server listen
-    const server = app.listen(config.host.port, () => {
-      const koreaDate = moment().format('yyyy-MM-DD HH:mm:ss');
+    server = app.listen(config.host.port, () => {
+      const koreaDate = moment().format();
       console.log(`[${koreaDate}] listen on Server, port is ${config.host.port}`);
     });
     // 3) 웹 소켓 생성 및 연결
     initSocket(server);
+    //
   })
   .catch(console.error);
+
+export { app, server };
