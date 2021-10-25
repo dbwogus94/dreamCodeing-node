@@ -37,9 +37,8 @@ app.use((err, req, res, next) => {
 
 /* mongoDB 연결 */
 connectDB()
-  .then(db => {
+  .then(() => {
     // mongoDB 연결 성공시 -> server 리슨 -> socket 생성
-    console.log('mongoDB init!');
     const server = app.listen(config.host.port);
     initSocket(server);
   })
