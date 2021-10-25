@@ -2,8 +2,12 @@ import { config } from '../config/config.js';
 import { MongoClient } from 'mongodb';
 import moment from 'moment';
 
+/** @type mongodb.MongoClient */
 let client;
+
+/** @type mongodb.Db */
 let db;
+
 /**
  * MongoDB connection
  * @returns Db instance
@@ -14,6 +18,7 @@ async function connectDB() {
   db = client.db();
   return db;
 }
+
 /**
  * get Db instance
  * @returns Db instance
@@ -24,6 +29,7 @@ function getDb() {
   }
   return db;
 }
+
 /**
  * get MongoClient instance
  * @returns MongoClient instance
@@ -34,6 +40,7 @@ function getClient() {
   }
   return client;
 }
+
 /**
  * close MongoDB connection
  * - mongoClient.close()를 사용하지 말고
@@ -44,6 +51,22 @@ async function close() {
   await client.close();
   db = undefined;
   client = undefined;
+}
+
+/**
+ * get users collection
+ * @returns {Collection} users collection
+ */
+function getUsers() {
+  return db.collection('users');
+}
+
+/**
+ * get tweets collection
+ * @returns {Collection} tweets collection
+ */
+function getTweets() {
+  return db.collection('tweets');
 }
 
 /**
@@ -96,5 +119,5 @@ async function getCollections(db) {
   return collections.map(collection => db.collection(collection.name));
 }
 
-const database = { connectDB, dropCollection, getCollections, getClient, getDb, close };
+const database = { connectDB, dropCollection, getCollections, getClient, getDb, close, getUsers, getTweets };
 export default database;

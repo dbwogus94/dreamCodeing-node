@@ -1,8 +1,10 @@
 import database from '../db/database.js';
 import { ObjectId } from 'mongodb';
 import moment from 'moment-timezone';
+
 // 한국시간으로 타임존 설정
 moment.tz.setDefault('Asia/Seoul');
+const { getTweets } = database;
 
 /**
  * client에 맞춰 tweet 포멧 플랫하게 변경
@@ -17,14 +19,6 @@ function toPlat(tweet) {
     if (key !== 'user') temp[key] = tweet[key];
   });
   return { ...temp, user_Id: _id, userId: id, username, name, email, url };
-}
-
-/**
- * get tweets collection
- * @returns {Collection} tweets collection
- */
-export function getTweets() {
-  return database.getDb().collection('tweets');
 }
 
 /**

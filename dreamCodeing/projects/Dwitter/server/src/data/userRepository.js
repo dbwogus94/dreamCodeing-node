@@ -1,14 +1,6 @@
 import { ObjectId } from 'mongodb';
 import database from '../db/database.js';
-const { getDb } = database;
-
-/**
- * get users collection
- * @returns {Collection} users collection
- */
-export function getUsers() {
-  return getDb().collection('users');
-}
+const { getUsers } = database;
 
 /**
  * Select user by username
