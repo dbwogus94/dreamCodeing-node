@@ -41,9 +41,12 @@ const sampleData = [
   },
 ];
 
+let db, users;
 // 전체 테스트 시작시 커넥션 연결
 beforeAll(async () => {
   await database.connectDB();
+  db = database.getDb();
+  users = db.collection('users');
 });
 
 // 전체 테스트 종료시 커넥션 해제(db, client 초기화)
@@ -51,20 +54,14 @@ afterAll(async () => {
   await database.close();
 });
 
-it('should get Db instance', async () => {
-  expect(database.getDb()).toBeInstanceOf(Db);
-});
-
 describe('findByUsername', () => {
   // 테스트 시작시 Delete All => 테스트 데이터 insert
   beforeAll(async () => {
-    await userRepository.getUsers().deleteMany({});
+    await users.deleteMany({});
     // or await database.getDb().collection('users').drop();
     // => drop은 존재하지 않는 경우 "ns not found"에러를 내보낸다.
 
     // 테스트 데이터 넣기
-    const db = database.getDb();
-    const users = db.collection('users');
     await users.insertMany(sampleData);
   });
 
@@ -88,12 +85,12 @@ describe('findByUsername', () => {
 describe('createUser', () => {
   // 테스트 시작시 Delete All
   beforeAll(async () => {
-    await userRepository.getUsers().deleteMany({});
+    await users.deleteMany({});
   });
 
   it('should user document count is 1 if insert success', async () => {
     await userRepository.createUser(sampleData[0]);
-    await expect(userRepository.getUsers().count()).resolves.toBe(1);
+    await expect(users.count()).resolves.toBe(1);
   });
   /* 테스트 flow
     1. 시작시 user collection delete all
@@ -107,7 +104,6 @@ describe('findById', () => {
 
   // 테스트 시작시 delete all => insert many
   beforeAll(async () => {
-    const users = userRepository.getUsers();
     await users.deleteMany({});
     const result = await users.insertMany(sampleData);
     id = result.insertedIds[0];
