@@ -3,6 +3,19 @@ import database from '../db/database.js';
 const { getUsers } = database;
 
 /**
+ * mongoDB에서 조회한 user data를 service와 client에서 필요한 데이터 형식으로 변환
+ * @param {object} user
+ * @returns user // null
+ * - user: {..user, id: user._id.toHexString()}
+ * - null: 자원 없음
+ */
+function mapOptionalUser(user) {
+  return user
+    ? { ...user, id: user._id.toHexString() } // 앱에서 필요한 데이터 형식으로 변환
+    : user; // null
+}
+
+/**
  * Select user by username
  * @param {string} user.username
  * @returns
@@ -11,11 +24,7 @@ const { getUsers } = database;
  */
 export const findByUsername = async username => {
   const user = await getUsers().findOne({ username });
-  return user //
-    ? { ...user, id: user._id.toHexString() }
-    : null;
-  // _id: ObjectId(_id)
-  // id: ObjectId(_id).toString()
+  return mapOptionalUser(user);
 };
 
 /**
@@ -38,7 +47,5 @@ export const createUser = async user => {
  */
 export const findById = async id => {
   const user = await getUsers().findOne({ _id: ObjectId(id) }, { projection: { password: 0, email: 0 } }); // 제외할 필드 설정
-  return user //
-    ? { ...user, id: user._id.toHexString() }
-    : null;
+  return mapOptionalUser(user);
 };

@@ -7,18 +7,38 @@ moment.tz.setDefault('Asia/Seoul');
 const { getTweets } = database;
 
 /**
+ * mongoDB에서 조회한 tweet data를 service와 client에서 필요한 데이터 형식으로 변환
+ * @param {object} tweet
+ * @returns tweet || null
+ * - tweet: {..tweet, id: tweet._id.toHexString()}
+ * - null: 자원 없음
+ */
+function mapOptionalTweet(tweet) {
+  return tweet
+    ? { ...tweet, id: tweet._id.toHexString() } //
+    : tweet; // null
+}
+
+/**
+ * mongoDB에서 조회한 tweets data를 service와 client에서 필요한 데이터 형식으로 변환
+ * @param {object} tweets
+ * @returns tweets || []
+ * - tweets: {tweet, tweet, ...}
+ * - tweet: {...tweet, id: tweet._id.toHexString()}
+ */
+function mapTweets(tweets) {
+  return tweets.map(mapOptionalTweet);
+}
+
+/**
  * client에 맞춰 tweet 포멧 플랫하게 변경
  * @param {object} tweet
  * @returns plat tweet
  * - {_id, id, text, createdAt, user_id, userId, username, name, email, url}
  */
 function toPlat(tweet) {
-  const temp = {};
-  const { _id, id, username, name, email, url } = tweet.user;
-  Object.keys(tweet).forEach(key => {
-    if (key !== 'user') temp[key] = tweet[key];
-  });
-  return { ...temp, user_Id: _id, userId: id, username, name, email, url };
+  const { id, _id, text, createdAt } = tweet;
+  return { id, _id, text, createdAt, ...tweet.user };
 }
 
 /**
@@ -30,8 +50,11 @@ function toPlat(tweet) {
  */
 export const findTweets = async () => {
   const findCursor = await getTweets().find().sort({ createdAt: -1 }); // 1 오름, -1 내림
-  const result = await findCursor.toArray();
-  return result.map(tweet => toPlat({ ...tweet, id: tweet._id.toHexString() }));
+  const tweets = await findCursor.toArray();
+  // 1차 가공 => DB 변경에 따른 가공
+  const result = mapTweets(tweets);
+  // 2차 가공 => client가 사용하는 데이터 포멧으로 가공
+  return result.map(tweet => toPlat(tweet));
 };
 
 /**
@@ -46,8 +69,11 @@ export const findTweetsByUser = async username => {
   const findCursor = await getTweets() //
     .find({ 'user.username': username })
     .sort({ createdAt: -1 }); // 1 오름, -1 내림;
-  const result = await findCursor.toArray();
-  return result.map(tweet => toPlat({ ...tweet, id: tweet._id.toHexString() }));
+  const tweets = await findCursor.toArray();
+  // 1차 가공 => DB 변경에 따른 가공
+  const result = mapTweets(tweets);
+  // 2차 가공 => client가 사용하는 데이터 포멧으로 가공
+  return result.map(tweet => toPlat(tweet));
 };
 
 /**
@@ -58,9 +84,10 @@ export const findTweetsByUser = async username => {
  * - null : 자원이 없는 경우
  */
 export const findTweetById = async id => {
-  const result = await getTweets().findOne({ _id: ObjectId(id) });
-  return result //
-    ? toPlat({ ...result, id: result._id.toHexString() })
+  const tweet = await getTweets().findOne({ _id: ObjectId(id) });
+  const result = mapOptionalTweet(tweet); // 1차 가공
+  return result
+    ? toPlat(result) // 2차 가공
     : null;
 };
 
@@ -73,10 +100,16 @@ export const findTweetById = async id => {
  * - InsertOneResult.insertedId: 생성된 document _id
  */
 export const createTweet = async (text, user) => {
+  const { id, username, name, url } = user;
   return getTweets().insertOne({
     text,
     createdAt: moment().format(), // ex) 2021-10-21T02:13:03+09:00
-    user,
+    user: {
+      userId: id,
+      username,
+      name,
+      url,
+    },
   });
 };
 
@@ -137,6 +170,20 @@ export const updateTweet = async (id, text) => {
     **데이터 갱신 - document의 특정 필드만 변경
     **데이터 변경 - document의 _id를 제외한 모든 데이터 변경
     **upsert = update + insert
+
+    ## findAndUpdate
+    - mongoDB API를 확인하면 updateOne의 경우 수정 결과를 리턴하지 않는다고 나와있다.
+    - 그리고 수정 결과가 필요하다면 findAndUpdate를 사용하라고 가이드한다.
+
+    ex) 
+    getTweets().findOneAndUpdate(
+      { _id: new ObjectId(id) },            // 찾을 document
+      { $set: { text } },                   // 수정할 내용
+      { returnDocument: 'after' }           // 수정 후 결과를 문서를 리턴하도록 설정
+      
+    ### findOneAndUpdate()의 "returnDocument" 옵션
+    - findOneAndUpdate는 기본적으로 수정하기 전 document를 리턴한다.
+    - 하지만 returnDocument에 'after'를 값으로 지정하면 수정후 document를 리턴한다.
   */
 };
 
