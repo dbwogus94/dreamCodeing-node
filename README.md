@@ -3,6 +3,7 @@
 ## 소개
 - node + express 강의 코드와 강의를 진행하면서 스터디한 코드를 저장하는 저장소입니다.
 - 기본적인 nodejs, express 사용법과 실습 프로젝트를 통한 express 서버를 다루는 방법을 정리합니다.
+- [강의 정리 노션](https://www.notion.so/jaehyun0119/node-c8a27555f8ca4a71b6f9ca8430647cd7)
 
 ## 정리한 내용
 1. node.js 내장 모듈과 express 사용법 정리
